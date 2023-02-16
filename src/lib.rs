@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use rusqlite::Result;
 
 pub use crate::aliases::*;
+pub use crate::fasta::*;
 
 /// Provide (read-only) access to a `seqrepo` sequence repository.
 #[derive(Debug)]

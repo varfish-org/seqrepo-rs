@@ -6,7 +6,7 @@ use chrono::NaiveDateTime;
 use noodles::core::{Position, Region};
 use rusqlite::{Connection, OpenFlags};
 
-static expected_schema_version: u32 = 1;
+static EXPECTED_SCHEMA_VERSION: u32 = 1;
 
 /// A record from the `db.sqlite3` database.
 #[derive(Debug, PartialEq)]
@@ -37,60 +37,6 @@ pub struct FastaDir {
     schema_version: u32,
 }
 
-// /// Read from bgzip-ed FASTA file.
-// fn read_bgzip_fasta(
-//     path_gz: PathBuf,
-//     seq_id: &str,
-//     begin: usize,
-//     end: usize,
-// ) -> Result<String, anyhow::Error> {
-//     // Get offset in bgzip file.
-//     let path_fai = format!("{}.fai", &path_gz.as_ref());
-//     // let file_fai = File::open(path_fai)?;
-//     // struct FaiRecord {
-//     //     bases: usize,
-//     //     offset: usize,
-//     //     line_len: usize,
-//     // }
-//     // let mut fai_record = None;
-
-//     // for line in std::io::BufReader::new(file_fai).lines() {
-//     //     let line = line?;
-//     //     let arr = line.split("\t");
-//     //     let fai_seq_id = arr.next().expect("invalid .fai?");
-//     //     if fai_seq_id == seq_id {
-//     //         let bases = arr.next().expect("invalid .fai?");
-//     //         let bases = str::parse(bases)?;
-//     //         let offset = arr.next().expect("invalid .fai?");
-//     //         let offset = str::parse(offset)?;
-//     //         let _ = arr.next().expect("invalid .fai?");
-//     //         let line_len = arr.next().expect("invalid .fai?");
-//     //         let line_len = str::parse(line_len)?;
-//     //         fai_record = Some(FaiRecord { bases, offset, line_len });
-//     //         break;
-//     //     }
-//     // }
-
-//     // if !fai_record.is_some() {
-//     //     return Err(anyhow::anyhow!("Could not find seq_id {} in {}", &seq_id, &path_fai));
-//     // }
-//     // let fai_record = fai_record.unwrap();
-
-//     let path_gzi = format!("{}.gzi", &path_gz.as_ref());
-
-//     // Create reader into bgzf file.
-//     let bgzf_index = noodles::bgzf::gzi::read(format!("{}.gzi", path_gz.as_ref()))?;
-//     let bgzf_reader = noodles::bgzf::indexed_reader::Builder::default()
-//         .set_index(bgzf_index)
-//         .build_from_path(path_gzi)?;
-//     let fai_index = noodles::fasta::fai::read(format!("{}.fai", &path_gz.as_ref()))?;
-//     let fai_reader = noodles::fasta::indexed_reader::Builder::default()
-//         .set_index(fai_index)
-//         .build_from_reader(bgzf_reader)?;
-
-//     fai_reader.query(Region::new(seq_id))
-// }
-
 impl FastaDir {
     /// Initialize new `FastaDir`, will open connection to the database.
     pub fn new<P>(root_dir: P) -> Result<Self, anyhow::Error>
@@ -106,12 +52,12 @@ impl FastaDir {
         )?;
 
         let schema_version = Self::fetch_schema_version(&conn)?;
-        if schema_version != expected_schema_version {
+        if schema_version != EXPECTED_SCHEMA_VERSION {
             Err(anyhow::anyhow!(
                 "Upgrade required: Database schema version is {} and the code \
                 expects {}",
                 schema_version,
-                expected_schema_version
+                EXPECTED_SCHEMA_VERSION
             ))
         } else {
             Ok(FastaDir {
@@ -125,7 +71,7 @@ impl FastaDir {
     /// Load schema version from the database.
     fn fetch_schema_version(conn: &Connection) -> Result<u32, anyhow::Error> {
         let sql = "select value from meta where key = 'schema version'";
-        let mut stmt = conn.prepare(&sql)?;
+        let mut stmt = conn.prepare(sql)?;
 
         Ok(stmt.query_row([], |row| {
             let value: String = row.get(0).unwrap();
@@ -142,7 +88,7 @@ impl FastaDir {
     pub fn fetch_seqinfo(&self, seq_id: &str) -> Result<SeqInfoRecord, anyhow::Error> {
         let sql = "select seq_id, len, alpha, added, relpath from seqinfo \
         where seq_id = ? order by added desc";
-        let mut stmt = self.conn.prepare(&sql)?;
+        let mut stmt = self.conn.prepare(sql)?;
 
         Ok(stmt.query_row([&seq_id], |row| {
             let added: String = row.get(3)?;
@@ -184,11 +130,11 @@ impl FastaDir {
         let path_bgzip = self.root_dir.join(seqinfo.relpath);
         let path_bgzip = path_bgzip.as_path().to_str().unwrap();
 
-        let bgzf_index = noodles::bgzf::gzi::read(format!("{}.gzi", path_bgzip))?;
+        let bgzf_index = noodles::bgzf::gzi::read(format!("{path_bgzip}.gzi"))?;
         let bgzf_reader = noodles::bgzf::indexed_reader::Builder::default()
             .set_index(bgzf_index)
             .build_from_path(path_bgzip)?;
-        let fai_index = noodles::fasta::fai::read(format!("{}.fai", path_bgzip))?;
+        let fai_index = noodles::fasta::fai::read(format!("{path_bgzip}.fai"))?;
         let mut fai_reader = noodles::fasta::indexed_reader::Builder::default()
             .set_index(fai_index)
             .build_from_reader(bgzf_reader)?;
@@ -226,7 +172,7 @@ mod test {
     fn fetch_seqinfo() -> Result<(), anyhow::Error> {
         let fd = FastaDir::new("tests/data/seqrepo/latest/sequences")?;
         let seq_id = "5q5HZTCRudL17NTiv5Bn6th__0FrZH04";
-        let si = fd.fetch_seqinfo(&seq_id)?;
+        let si = fd.fetch_seqinfo(seq_id)?;
         assert_eq!(
             format!("{:?}", &si),
             "SeqInfoRecord { seq_id: \"5q5HZTCRudL17NTiv5Bn6th__0FrZH04\", len: 1873, \
