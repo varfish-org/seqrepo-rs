@@ -128,8 +128,9 @@ fn main_export(common_args: &CommonArgs, args: &ExportArgs) -> Result<(), anyhow
             let seq = seq_repo
                 .fetch_sequence(&seqrepo::AliasOrSeqId::SeqId(group[0].seqid.clone()))
                 .unwrap();
-            group.sort_by(|a, b| match (&a.namespace, &b.namespace) {
-                (LibNamespace(a), LibNamespace(b)) => a.partial_cmp(b).unwrap(),
+            group.sort_by(|a, b| {
+                let (LibNamespace(a), LibNamespace(b)) = (&a.namespace, &b.namespace);
+                a.partial_cmp(b).unwrap()
             });
             let metas = group
                 .iter()
@@ -140,7 +141,7 @@ fn main_export(common_args: &CommonArgs, args: &ExportArgs) -> Result<(), anyhow
 
             println!(">{}", metas.join(" "));
             for line in wrap(&seq, 100) {
-                println!("{}", line);
+                println!("{line}");
             }
 
             group.clear();
