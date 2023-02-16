@@ -1,6 +1,7 @@
 //! Code for providing SeqRepo in Rust.
 
 mod aliases;
+mod fasta;
 
 use std::path::{Path, PathBuf};
 
