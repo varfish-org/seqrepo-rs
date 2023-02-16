@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.1.2](https://www.github.com/bihealth/seqrepo-rs/compare/v0.1.1...v0.1.2) (2023-02-16)
+
+
+### Bug Fixes
+
+* Cargo.toml for license-file ([#16](https://www.github.com/bihealth/seqrepo-rs/issues/16)) ([197c7e1](https://www.github.com/bihealth/seqrepo-rs/commit/197c7e1c48fd14d98fb73c9f796ff575b485441d))
+
 ### [0.1.1](https://www.github.com/bihealth/seqrepo-rs/compare/v0.1.0...v0.1.1) (2023-02-16)
 
 
