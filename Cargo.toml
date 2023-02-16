@@ -1,10 +1,10 @@
 [package]
-name = "seqrepo-rs"
+name = "seqrepo"
 version = "0.1.1"
 edition = "2021"
 authors = ["Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"]
 description = "Port of (read-only) functionality of biocommons/seqrepo to Rust"
-license-file = "LICENSE.md"
+license-file = "LICENSE.txt"
 homepage = "https://github.com/bihealth/seqrepo-rs"
 readme = "README.md"
 
