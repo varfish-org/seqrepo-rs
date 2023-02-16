@@ -156,7 +156,7 @@ pub fn main() -> Result<(), anyhow::Error> {
     tracing::subscriber::with_default(collector, || {
         match &cli.command {
             Commands::Export(args) => {
-                main_export(&cli.common, &args)?;
+                main_export(&cli.common, args)?;
             }
         }
 
