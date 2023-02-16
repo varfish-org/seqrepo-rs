@@ -28,6 +28,7 @@ pub struct SeqInfoRecord {
 /// When the key is a hash based on sequence (e.g., SHA512), the combination provides a
 /// convenient non-redundant storage of sequences with fast access to sequences and sequence
 /// slices, compact storage and easy replication.
+#[derive(Debug)]
 pub struct FastaDir {
     /// The path to the directory ("$instance/sequences" within seqrepo).
     root_dir: PathBuf,
@@ -115,17 +116,10 @@ impl FastaDir {
     pub fn fetch_sequence_part(
         &self,
         seq_id: &str,
-        start: Option<usize>,
+        begin: Option<usize>,
         end: Option<usize>,
     ) -> Result<String, anyhow::Error> {
         let seqinfo = self.fetch_seqinfo(seq_id)?;
-        // read_bgzip_fasta(
-        //     self.root_dir.join(seqinfo.relpath),
-        //     seq_id,
-        //     start.unwrap_or_default(), // default == 0
-        //     end.map(|end| std::cmp::min(end, seqinfo.len))
-        //         .unwrap_or(seqinfo.len),
-        // )
 
         let path_bgzip = self.root_dir.join(seqinfo.relpath);
         let path_bgzip = path_bgzip.as_path().to_str().unwrap();
@@ -139,7 +133,7 @@ impl FastaDir {
             .set_index(fai_index)
             .build_from_reader(bgzf_reader)?;
 
-        let start = Position::try_from(start.map(|start| start + 1).unwrap_or(1))?;
+        let start = Position::try_from(begin.map(|start| start + 1).unwrap_or(1))?;
         let end = Position::try_from(
             end.map(|end| std::cmp::min(end, seqinfo.len))
                 .unwrap_or(seqinfo.len),

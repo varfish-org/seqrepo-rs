@@ -20,7 +20,7 @@ pub struct NamespacedAlias {
     pub alias: String,
 }
 
-/// Datastructure for a query to `Aliases::find()`.
+/// Datastructure for a query to `AliasDb::find()`.
 #[derive(Debug)]
 pub struct Query {
     /// Optionally, namespace to query within.
@@ -44,9 +44,9 @@ impl Default for Query {
     }
 }
 
-/// Record as returned by `Aliases::find()`.
+/// Record as returned by `AliasDb::find()`.
 #[derive(Debug)]
-pub struct AliasRecord {
+pub struct AliasDbRecord {
     pub seqalias_id: u64,
     pub seqid: String,
     pub alias: String,
@@ -57,7 +57,7 @@ pub struct AliasRecord {
 
 /// Provides access to the aliases database of the `SeqRepo`.
 #[derive(Debug)]
-pub struct Aliases {
+pub struct AliasDb {
     /// The path to the seqrepo root directory.
     sr_root_dir: PathBuf,
     /// The name of the seqrepo instance.
@@ -66,7 +66,7 @@ pub struct Aliases {
     conn: Connection,
 }
 
-impl Aliases {
+impl AliasDb {
     pub fn new<P>(sr_root_dir: &P, sr_instance: &str) -> Result<Self, anyhow::Error>
     where
         P: AsRef<Path>,
@@ -75,7 +75,7 @@ impl Aliases {
         let sr_instance = sr_instance.to_string();
         let conn = Self::new_connection(&sr_root_dir, &sr_instance)?;
 
-        Ok(Aliases {
+        Ok(AliasDb {
             sr_root_dir,
             sr_instance,
             conn,
@@ -90,7 +90,7 @@ impl Aliases {
         )?)
     }
 
-    /// Try to clone the `Aliases`.
+    /// Try to clone the `AliasDb`.
     ///
     /// A new sqlite connection must be made so this can fail.
     pub fn try_clone(&self) -> Result<Self, anyhow::Error> {
@@ -111,9 +111,9 @@ impl Aliases {
     // used.  Otherwise arguments must match exactly.
     pub fn find<F>(&self, query: &Query, mut f: F) -> Result<(), anyhow::Error>
     where
-        F: FnMut(Result<AliasRecord, anyhow::Error>),
+        F: FnMut(Result<AliasDbRecord, anyhow::Error>),
     {
-        trace!("Aliases::find({:?})", &query);
+        trace!("AliasDb::find({:?})", &query);
         fn eq_or_like(s: &str) -> &'static str {
             if s.contains('%') {
                 "like"
@@ -170,7 +170,7 @@ impl Aliases {
             let added: String = row.get(3)?;
             let added = NaiveDateTime::parse_from_str(&added, "%Y-%m-%d %H:%M:%S")
                 .expect("could not convert timestamp");
-            Ok(AliasRecord {
+            Ok(AliasDbRecord {
                 seqalias_id: row.get(0)?,
                 seqid: row.get(1)?,
                 alias: row.get(2)?,
@@ -194,9 +194,9 @@ mod test {
 
     use crate::Namespace;
 
-    use super::{Aliases, Query};
+    use super::{AliasDb, Query};
 
-    fn run(aliases: &Aliases) -> Result<(), anyhow::Error> {
+    fn run(aliases: &AliasDb) -> Result<(), anyhow::Error> {
         let mut values = Vec::new();
 
         aliases.find(&Query::default(), |record| {
@@ -219,20 +219,20 @@ mod test {
 
     #[test]
     fn smoke_test() -> Result<(), anyhow::Error> {
-        let aliases = Aliases::new(&PathBuf::from("tests/data"), "aliases")?;
+        let aliases = AliasDb::new(&PathBuf::from("tests/data"), "aliases")?;
         run(&aliases)
     }
 
     #[test]
     fn try_clone() -> Result<(), anyhow::Error> {
-        let aliases = Aliases::new(&PathBuf::from("tests/data"), "aliases")?;
+        let aliases = AliasDb::new(&PathBuf::from("tests/data"), "aliases")?;
         let second = aliases.try_clone()?;
         run(&second)
     }
 
     #[test]
     fn find_wildcard() -> Result<(), anyhow::Error> {
-        let aliases = Aliases::new(&PathBuf::from("tests/data"), "aliases")?;
+        let aliases = AliasDb::new(&PathBuf::from("tests/data"), "aliases")?;
 
         let mut values = Vec::new();
 
@@ -264,7 +264,7 @@ mod test {
 
     #[test]
     fn find_no_wildcard() -> Result<(), anyhow::Error> {
-        let aliases = Aliases::new(&PathBuf::from("tests/data"), "aliases")?;
+        let aliases = AliasDb::new(&PathBuf::from("tests/data"), "aliases")?;
 
         let mut values = Vec::new();
 

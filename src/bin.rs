@@ -3,7 +3,7 @@ use clap_verbosity_flag::{InfoLevel, Verbosity};
 use tracing::info;
 
 use seqrepo::{
-    AliasRecord, Namespace as LibNamespace, NamespacedAlias as LibNamespacedAlias, Query,
+    AliasDbRecord, Namespace as LibNamespace, NamespacedAlias as LibNamespacedAlias, Query,
 };
 
 /// Commonly used command line arguments.
@@ -105,7 +105,7 @@ struct ExportArgs {
     pub aliases: Vec<String>,
 }
 
-fn print_record(record: Result<AliasRecord, anyhow::Error>) {
+fn print_record(record: Result<AliasDbRecord, anyhow::Error>) {
     info!("{:?}", record.expect("problem loading record"));
 }
 
@@ -114,8 +114,8 @@ fn main_export(common_args: &CommonArgs, args: &ExportArgs) -> Result<(), anyhow
     info!("common_args = {:?}", &common_args);
     info!("args = {:?}", &args);
 
-    let sr = seqrepo::SeqRepo::new(&common_args.root_directory, &args.instance_name);
-    let sr_aliases = sr.aliases()?;
+    let seq_repo = seqrepo::SeqRepo::new(&common_args.root_directory, &args.instance_name)?;
+    let alias_db = seq_repo.alias_db();
 
     let mut query = Query {
         namespace: args.namespace.as_ref().map(|namespace| (*namespace).into()),
@@ -123,11 +123,11 @@ fn main_export(common_args: &CommonArgs, args: &ExportArgs) -> Result<(), anyhow
     };
 
     if args.aliases.is_empty() {
-        sr_aliases.find(&query, print_record)?;
+        alias_db.find(&query, print_record)?;
     } else {
         for alias in &args.aliases {
             query.alias = Some(alias.clone());
-            sr_aliases.find(&query, print_record)?;
+            alias_db.find(&query, print_record)?;
         }
     }
 
