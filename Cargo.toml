@@ -17,6 +17,7 @@ chrono = "0.4.23"
 clap = { version = "4.1.4", features = ["derive", "env"] }
 clap-verbosity-flag = "2.0.0"
 log = "0.4.17"
+noodles = { version = "0.32.0", features = ["bgzf", "fasta", "core"] }
 rusqlite = "0.28.0"
 strum = { version = "0.24.1", features = ["derive", "strum_macros"] }
 tracing = "0.1.37"
