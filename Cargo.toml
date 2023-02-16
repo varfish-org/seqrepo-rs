@@ -1,6 +1,6 @@
 [package]
 name = "seqrepo-rs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"]
 description = "Port of (read-only) functionality of biocommons/seqrepo to Rust"
