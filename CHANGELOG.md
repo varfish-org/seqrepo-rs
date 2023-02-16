@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.1.1](https://www.github.com/bihealth/seqrepo-rs/compare/v0.1.0...v0.1.1) (2023-02-16)
+
+
+### Bug Fixes
+
+* release 0.1.1 to crates.io ([#14](https://www.github.com/bihealth/seqrepo-rs/issues/14)) ([9e3198b](https://www.github.com/bihealth/seqrepo-rs/commit/9e3198b55f47820d37b34d5560e1b5f6107badf9))
+
 ## 0.1.0 (2023-02-16)
 
 
