@@ -7,3 +7,11 @@ This is a port of [biocommons/seqrepo](https://github.com/biocommons/seqrepo) to
 
 At the moment, only read access has been implemented.
 For downloading etc., you will have to use the Python package.
+
+## Features
+
+You can use the following features:
+
+- `full` -- all features
+- `tracing` -- do tracing logging via `tracing`
+- `cli` -- a simple command line interface
