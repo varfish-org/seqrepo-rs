@@ -65,7 +65,7 @@ jobs:
         uses: actions-rs/tarpaulin@v0.1
         with:
           version: 0.16.0
-          args: "-- --test-threads 1"
+          args: "--all-features -- --test-threads 1"
 
       - name: Codecov
         uses: codecov/codecov-action@v3
