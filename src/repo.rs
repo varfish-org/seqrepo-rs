@@ -17,6 +17,14 @@ pub struct SeqRepo {
     fasta_dir: FastaDir,
 }
 
+pub enum AliasOrSeqId {
+    Alias {
+        value: String,
+        namespace: Option<String>,
+    },
+    SeqId(String),
+}
+
 impl SeqRepo {
     /// Create new `SeqRepo` at the given path.
     pub fn new<P>(path: P, instance: &str) -> Result<Self, anyhow::Error>
@@ -57,52 +65,53 @@ impl SeqRepo {
     }
 
     /// Fetch part sequence given an alias.
-    pub fn fetch_sequence(
-        &self,
-        alias: &str,
-        namespace: Option<&str>,
-    ) -> Result<String, anyhow::Error> {
-        self.fetch_sequence_part(alias, namespace, None, None)
+    pub fn fetch_sequence(&self, alias_or_seq_id: &AliasOrSeqId) -> Result<String, anyhow::Error> {
+        self.fetch_sequence_part(alias_or_seq_id, None, None)
     }
 
     /// Fetch part sequence given an alias.
     pub fn fetch_sequence_part(
         &self,
-        alias: &str,
-        namespace: Option<&str>,
+        alias_or_seq_id: &AliasOrSeqId,
         begin: Option<usize>,
         end: Option<usize>,
     ) -> Result<String, anyhow::Error> {
-        let query = Query {
-            namespace: namespace.map(|s| Namespace(s.to_string())),
-            alias: Some(alias.to_string()),
-            ..Query::default()
+        let seq_ids = match alias_or_seq_id {
+            AliasOrSeqId::Alias { value, namespace } => {
+                let query = Query {
+                    namespace: namespace.as_ref().map(|s| Namespace(s.to_string())),
+                    alias: Some(value.to_string()),
+                    ..Default::default()
+                };
+                let mut seq_ids = Vec::new();
+                self.alias_db
+                    .find(&query, |record| seq_ids.push(record.unwrap().seqid))?;
+
+                if seq_ids.is_empty() {
+                    return Err(anyhow::anyhow!(
+                        "Could not resolve alias {} to seqid!",
+                        value
+                    ));
+                } else if seq_ids.len() > 1 {
+                    return Err(anyhow::anyhow!(
+                        "Alias {} resolved to multiple seqids: {:?}",
+                        value,
+                        &seq_ids
+                    ));
+                }
+
+                seq_ids
+            }
+            AliasOrSeqId::SeqId(seqid) => vec![seqid.clone()],
         };
 
-        let mut seq_ids = Vec::new();
-        self.alias_db
-            .find(&query, |record| seq_ids.push(record.unwrap().seqid))?;
-
-        if seq_ids.is_empty() {
-            Err(anyhow::anyhow!(
-                "Could not resolve alias {} to seqid!",
-                alias
-            ))
-        } else if seq_ids.len() > 1 {
-            Err(anyhow::anyhow!(
-                "Alias {} resolved to multiple seqids: {:?}",
-                alias,
-                &seq_ids
-            ))
-        } else {
-            self.fasta_dir.fetch_sequence_part(&seq_ids[0], begin, end)
-        }
+        self.fasta_dir.fetch_sequence_part(&seq_ids[0], begin, end)
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::SeqRepo;
+    use crate::{AliasOrSeqId, SeqRepo};
 
     #[test]
     fn seqrepo_smoke() -> Result<(), anyhow::Error> {
@@ -124,7 +133,10 @@ mod test {
         let alias = "NM_001304430.2";
 
         assert_eq!(
-            sr.fetch_sequence(alias, None)?,
+            sr.fetch_sequence(&AliasOrSeqId::Alias {
+                value: alias.to_string(),
+                namespace: None
+            })?,
             "ACTGCTGAGCTGGGAGATGTCGGCGGCGTGTTGGGAGGAACCGTGGGGTCTTCCCGGCGGCTTT\
             GCGAAGCGGGTCCTGGTGACCGGCGGTGCTGGTTTCATGTAGGTAATGGCGCCGCTAGCCAAGCA\
             GTGGCTCCCCAGAAACCCCTACCTTTTCCCGCAGCTCTGCTTGCCCTAGTGCATCACATATGATT\
@@ -165,11 +177,25 @@ mod test {
         let alias = "NM_001304430.2";
 
         assert_eq!(
-            sr.fetch_sequence_part(alias, None, Some(0), Some(10))?,
+            sr.fetch_sequence_part(
+                &AliasOrSeqId::Alias {
+                    value: alias.to_string(),
+                    namespace: None
+                },
+                Some(0),
+                Some(10)
+            )?,
             "ACTGCTGAGC"
         );
         assert_eq!(
-            sr.fetch_sequence_part(alias, None, Some(100), Some(110))?,
+            sr.fetch_sequence_part(
+                &AliasOrSeqId::Alias {
+                    value: alias.to_string(),
+                    namespace: None
+                },
+                Some(100),
+                Some(110)
+            )?,
             "ATGTAGGTAA"
         );
 

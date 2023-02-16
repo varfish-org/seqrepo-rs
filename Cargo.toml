@@ -2,6 +2,11 @@
 name = "seqrepo-rs"
 version = "0.1.0"
 edition = "2021"
+authors = ["Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"]
+description = "Port of (read-only) functionality of biocommons/seqrepo to Rust"
+license-file = "LICENSE.md"
+homepage = "https://github.com/bihealth/seqrepo-rs"
+readme = "README.md"
 
 [lib]
 name = "seqrepo"
@@ -20,6 +25,7 @@ log = "0.4.17"
 noodles = { version = "0.32.0", features = ["bgzf", "fasta", "core"] }
 rusqlite = "0.28.0"
 strum = { version = "0.24.1", features = ["derive", "strum_macros"] }
+textwrap = "0.16.0"
 tracing = "0.1.37"
 tracing-subscriber = "0.3.16"
 

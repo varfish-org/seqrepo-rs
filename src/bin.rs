@@ -1,9 +1,12 @@
+//! Command line interface to the `seqrepo` crate.
+
 use clap::{arg, command, Args, Parser, Subcommand, ValueEnum};
 use clap_verbosity_flag::{InfoLevel, Verbosity};
-use tracing::info;
+use textwrap::wrap;
+use tracing::debug;
 
 use seqrepo::{
-    AliasDbRecord, Namespace as LibNamespace, NamespacedAlias as LibNamespacedAlias, Query,
+    AliasDbRecord, Namespace as LibNamespace, NamespacedAlias as LibNamespacedAlias, Query, SeqRepo,
 };
 
 /// Commonly used command line arguments.
@@ -105,16 +108,12 @@ struct ExportArgs {
     pub aliases: Vec<String>,
 }
 
-fn print_record(record: Result<AliasDbRecord, anyhow::Error>) {
-    info!("{:?}", record.expect("problem loading record"));
-}
-
 /// Implementation of "export" command.
 fn main_export(common_args: &CommonArgs, args: &ExportArgs) -> Result<(), anyhow::Error> {
-    info!("common_args = {:?}", &common_args);
-    info!("args = {:?}", &args);
+    debug!("common_args = {:?}", &common_args);
+    debug!("args = {:?}", &args);
 
-    let seq_repo = seqrepo::SeqRepo::new(&common_args.root_directory, &args.instance_name)?;
+    let seq_repo = SeqRepo::new(&common_args.root_directory, &args.instance_name)?;
     let alias_db = seq_repo.alias_db();
 
     let mut query = Query {
@@ -122,14 +121,50 @@ fn main_export(common_args: &CommonArgs, args: &ExportArgs) -> Result<(), anyhow
         ..Default::default()
     };
 
+    let mut group: Vec<AliasDbRecord> = Vec::new();
+
+    fn print_and_clear_group(seq_repo: &SeqRepo, group: &mut Vec<AliasDbRecord>) {
+        if !group.is_empty() {
+            let seq = seq_repo
+                .fetch_sequence(&seqrepo::AliasOrSeqId::SeqId(group[0].seqid.clone()))
+                .unwrap();
+            group.sort_by(|a, b| match (&a.namespace, &b.namespace) {
+                (LibNamespace(a), LibNamespace(b)) => a.partial_cmp(b).unwrap(),
+            });
+            let metas = group
+                .iter()
+                .map(|record| match &record.namespace {
+                    LibNamespace(namespace) => format!("{}:{}", namespace, record.alias),
+                })
+                .collect::<Vec<_>>();
+
+            println!(">{}", metas.join(" "));
+            for line in wrap(&seq, 100) {
+                println!("{}", line);
+            }
+
+            group.clear();
+        }
+    }
+
+    let mut handle_record = |record: Result<AliasDbRecord, anyhow::Error>| {
+        let record = record.unwrap();
+        if !group.is_empty() && group[0].seqid != record.seqid {
+            print_and_clear_group(&seq_repo, &mut group);
+        }
+        group.push(record);
+    };
+
     if args.aliases.is_empty() {
-        alias_db.find(&query, print_record)?;
+        alias_db.find(&query, &mut handle_record)?;
     } else {
         for alias in &args.aliases {
             query.alias = Some(alias.clone());
-            alias_db.find(&query, print_record)?;
+            alias_db.find(&query, &mut handle_record)?;
         }
     }
+
+    print_and_clear_group(&seq_repo, &mut group);
 
     Ok(())
 }
@@ -163,7 +198,30 @@ pub fn main() -> Result<(), anyhow::Error> {
         Ok::<(), anyhow::Error>(())
     })?;
 
-    info!("All done! Have a nice day.");
+    debug!("All done! Have a nice day.");
 
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use clap_verbosity_flag::Verbosity;
+
+    use super::main_export;
+    use crate::{CommonArgs, ExportArgs};
+
+    #[test]
+    fn run_cmd() -> Result<(), anyhow::Error> {
+        main_export(
+            &CommonArgs {
+                verbose: Verbosity::new(0, 0),
+                root_directory: "tests/data/seqrepo".to_string(),
+            },
+            &ExportArgs {
+                namespace: None,
+                instance_name: "latest".to_string(),
+                aliases: vec!["XR_001757199.1".to_string()],
+            },
+        )
+    }
 }
