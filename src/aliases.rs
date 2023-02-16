@@ -83,7 +83,7 @@ impl Aliases {
     }
 
     fn new_connection(sr_root_dir: &Path, sr_instance: &str) -> Result<Connection, anyhow::Error> {
-        let db_path = sr_root_dir.join(&sr_instance).join("aliases.sqlite3");
+        let db_path = sr_root_dir.join(sr_instance).join("aliases.sqlite3");
         Ok(Connection::open_with_flags(
             db_path,
             OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
@@ -115,7 +115,7 @@ impl Aliases {
     {
         trace!("Aliases::find({:?})", &query);
         fn eq_or_like(s: &str) -> &'static str {
-            if s.contains("%") {
+            if s.contains('%') {
                 "like"
             } else {
                 "="
@@ -127,7 +127,7 @@ impl Aliases {
 
         // Add namespace to query if provided.
         if let Some(Namespace(namespace)) = &query.namespace {
-            let namespace = format!("{}", &namespace);
+            let namespace = (&namespace).to_string();
             clauses.push(format!("namespace {} ?", eq_or_like(&namespace)));
             params.push(Value::Text(namespace));
         }
@@ -143,7 +143,7 @@ impl Aliases {
         }
         // Possibly limit to the current ones only.
         if query.current_only {
-            clauses.push(format!("is_current = 1"));
+            clauses.push("is_current = 1".to_string());
         }
 
         // Prepare SQL query.
@@ -158,7 +158,7 @@ impl Aliases {
         let mut sql = format!("SELECT {} FROM seqalias", &cols.join(", "));
         if !clauses.is_empty() {
             sql.push_str(" WHERE ");
-            let clauses: Vec<_> = clauses.iter().map(|s| format!("({})", s)).collect();
+            let clauses: Vec<_> = clauses.iter().map(|s| format!("({s})")).collect();
             sql.push_str(&clauses.join(" AND "));
         }
         sql.push_str(" ORDER BY seq_id, namespace, alias");
