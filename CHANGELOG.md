@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://www.github.com/bihealth/seqrepo-rs/compare/v0.1.2...v0.2.0) (2023-02-23)
+
+
+### Features
+
+* create cache writing and reading SeqRepo ([#21](https://www.github.com/bihealth/seqrepo-rs/issues/21)) ([#22](https://www.github.com/bihealth/seqrepo-rs/issues/22)) ([2d45533](https://www.github.com/bihealth/seqrepo-rs/commit/2d45533831183867b16ccbd934c7c953f418270a))
+
 ### [0.1.2](https://www.github.com/bihealth/seqrepo-rs/compare/v0.1.1...v0.1.2) (2023-02-16)
 
 
