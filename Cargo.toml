@@ -4,6 +4,7 @@ version = "0.1.2"
 edition = "2021"
 authors = ["Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"]
 description = "Port of (read-only) functionality of biocommons/seqrepo to Rust"
+license = "Apache-2.0"
 license-file = "LICENSE.txt"
 homepage = "https://github.com/bihealth/seqrepo-rs"
 readme = "README.md"
