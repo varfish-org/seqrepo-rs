@@ -4,6 +4,9 @@ use std::path::{Path, PathBuf};
 
 use crate::{AliasDb, FastaDir, Namespace, Query};
 
+/// Trait describing the interface of a sequence repository.
+trait Interface {}
+
 /// Provide (read-only) access to a `seqrepo` sequence repository.
 #[derive(Debug)]
 pub struct SeqRepo {
@@ -79,7 +82,7 @@ impl SeqRepo {
         let seq_ids = match alias_or_seq_id {
             AliasOrSeqId::Alias { value, namespace } => {
                 let query = Query {
-                    namespace: namespace.as_ref().map(|s| Namespace(s.to_string())),
+                    namespace: namespace.as_ref().map(|s| Namespace::new(s)),
                     alias: Some(value.to_string()),
                     ..Default::default()
                 };

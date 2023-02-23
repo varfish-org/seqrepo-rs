@@ -11,7 +11,29 @@ use tracing::{debug, trace};
 /// The string values returned by the `Display` trait are the values stored in
 /// the database.
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Namespace(pub String);
+pub struct Namespace {
+    pub value: String,
+}
+
+impl Namespace {
+    pub fn new(value: &str) -> Self {
+        Self {
+            value: value.to_string(),
+        }
+    }
+
+    pub fn from(value: String) -> Self {
+        Self { value }
+    }
+}
+
+impl std::ops::Deref for Namespace {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
 
 /// A pair of namespace and alias as available in the database.
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -126,7 +148,7 @@ impl AliasDb {
         let mut params: Vec<rusqlite::types::Value> = Vec::new();
 
         // Add namespace to query if provided.
-        if let Some(Namespace(namespace)) = &query.namespace {
+        if let Some(namespace) = &query.namespace {
             let namespace = (&namespace).to_string();
             clauses.push(format!("namespace {} ?", eq_or_like(&namespace)));
             params.push(Value::Text(namespace));
@@ -176,7 +198,7 @@ impl AliasDb {
                 alias: row.get(2)?,
                 added,
                 is_current: row.get(4)?,
-                namespace: Namespace(row.get(5)?),
+                namespace: Namespace::from(row.get(5)?),
             })
         })? {
             f(row.map_err(|e| anyhow::anyhow!("Error on row: {}", &e)));
@@ -192,9 +214,7 @@ mod test {
 
     use pretty_assertions::assert_eq;
 
-    use crate::Namespace;
-
-    use super::{AliasDb, Query};
+    use super::{AliasDb, Namespace, Query};
 
     fn run(aliases: &AliasDb) -> Result<(), anyhow::Error> {
         let mut values = Vec::new();
@@ -238,7 +258,7 @@ mod test {
 
         aliases.find(
             &Query {
-                namespace: Some(Namespace("%".to_string())),
+                namespace: Some(Namespace::new("%")),
                 alias: Some("%".to_string()),
                 seqid: Some("%".to_string()),
                 ..Default::default()
