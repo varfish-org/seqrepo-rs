@@ -149,7 +149,7 @@ impl AliasDb {
 
         // Add namespace to query if provided.
         if let Some(namespace) = &query.namespace {
-            let namespace = (&namespace).to_string();
+            let namespace = namespace.to_string();
             clauses.push(format!("namespace {} ?", eq_or_like(&namespace)));
             params.push(Value::Text(namespace));
         }

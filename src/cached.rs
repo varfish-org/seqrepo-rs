@@ -107,7 +107,7 @@ fn build_key(alias_or_seq_id: &AliasOrSeqId, begin: Option<usize>, end: Option<u
                 if namespace.is_empty() {
                     value.clone()
                 } else {
-                    format!("{}:{}", namespace, value)
+                    format!("{namespace}:{value}")
                 }
             }
             None => value.clone(),
@@ -117,9 +117,9 @@ fn build_key(alias_or_seq_id: &AliasOrSeqId, begin: Option<usize>, end: Option<u
 
     let suffix = match (begin, end) {
         (None, None) => "".to_string(),
-        (None, Some(end)) => format!("?-{}", end),
-        (Some(begin), None) => format!("{}-?", begin),
-        (Some(begin), Some(end)) => format!("{}-{}", begin, end),
+        (None, Some(end)) => format!("?-{end}"),
+        (Some(begin), None) => format!("{begin}-?"),
+        (Some(begin), Some(end)) => format!("{begin}-{end}"),
     };
 
     if suffix.is_empty() {
