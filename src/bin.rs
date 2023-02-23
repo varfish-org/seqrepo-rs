@@ -6,7 +6,8 @@ use textwrap::wrap;
 use tracing::debug;
 
 use seqrepo::{
-    AliasDbRecord, Namespace as LibNamespace, NamespacedAlias as LibNamespacedAlias, Query, SeqRepo,
+    AliasDbRecord, Interface, Namespace as LibNamespace, NamespacedAlias as LibNamespacedAlias,
+    Query, SeqRepo,
 };
 
 /// Commonly used command line arguments.
@@ -65,11 +66,11 @@ pub enum Namespace {
 impl From<Namespace> for LibNamespace {
     fn from(value: Namespace) -> Self {
         match value {
-            Namespace::Refseq => LibNamespace("NCBI".to_string()),
-            Namespace::Ensembl => LibNamespace("Ensembl".to_string()),
-            Namespace::Lrg => LibNamespace("Lrg".to_string()),
-            Namespace::Sha512t24u => LibNamespace("".to_string()),
-            Namespace::Ga4gh => LibNamespace("".to_string()),
+            Namespace::Refseq => LibNamespace::new("NCBI"),
+            Namespace::Ensembl => LibNamespace::new("Ensembl"),
+            Namespace::Lrg => LibNamespace::new("Lrg"),
+            Namespace::Sha512t24u => LibNamespace::new(""),
+            Namespace::Ga4gh => LibNamespace::new(""),
         }
     }
 }
@@ -129,14 +130,12 @@ fn main_export(common_args: &CommonArgs, args: &ExportArgs) -> Result<(), anyhow
                 .fetch_sequence(&seqrepo::AliasOrSeqId::SeqId(group[0].seqid.clone()))
                 .unwrap();
             group.sort_by(|a, b| {
-                let (LibNamespace(a), LibNamespace(b)) = (&a.namespace, &b.namespace);
-                a.partial_cmp(b).unwrap()
+                let (a, b) = (&a.namespace, &b.namespace);
+                a.value.partial_cmp(&b.value).unwrap()
             });
             let metas = group
                 .iter()
-                .map(|record| match &record.namespace {
-                    LibNamespace(namespace) => format!("{}:{}", namespace, record.alias),
-                })
+                .map(|record| format!("{}:{}", *record.namespace, record.alias))
                 .collect::<Vec<_>>();
 
             println!(">{}", metas.join(" "));
