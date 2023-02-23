@@ -1,11 +1,24 @@
-//! Code providing the `SeqRepo` implementation.
+//! Code providing the interface for sequence repositories and the base `SeqRepo` implementation.
 
 use std::path::{Path, PathBuf};
 
 use crate::{AliasDb, FastaDir, Namespace, Query};
 
 /// Trait describing the interface of a sequence repository.
-trait Interface {}
+pub trait Interface {
+    /// Fetch part sequence given an alias.
+    fn fetch_sequence(&self, alias_or_seq_id: &AliasOrSeqId) -> Result<String, anyhow::Error> {
+        self.fetch_sequence_part(alias_or_seq_id, None, None)
+    }
+
+    /// Fetch part sequence given an alias.
+    fn fetch_sequence_part(
+        &self,
+        alias_or_seq_id: &AliasOrSeqId,
+        begin: Option<usize>,
+        end: Option<usize>,
+    ) -> Result<String, anyhow::Error>;
+}
 
 /// Provide (read-only) access to a `seqrepo` sequence repository.
 #[derive(Debug)]
@@ -66,14 +79,10 @@ impl SeqRepo {
     pub fn fasta_dir(&self) -> &FastaDir {
         &self.fasta_dir
     }
+}
 
-    /// Fetch part sequence given an alias.
-    pub fn fetch_sequence(&self, alias_or_seq_id: &AliasOrSeqId) -> Result<String, anyhow::Error> {
-        self.fetch_sequence_part(alias_or_seq_id, None, None)
-    }
-
-    /// Fetch part sequence given an alias.
-    pub fn fetch_sequence_part(
+impl Interface for SeqRepo {
+    fn fetch_sequence_part(
         &self,
         alias_or_seq_id: &AliasOrSeqId,
         begin: Option<usize>,
@@ -114,7 +123,7 @@ impl SeqRepo {
 
 #[cfg(test)]
 mod test {
-    use crate::{AliasOrSeqId, SeqRepo};
+    use crate::{repo::Interface, AliasOrSeqId, SeqRepo};
 
     #[test]
     fn seqrepo_smoke() -> Result<(), anyhow::Error> {
