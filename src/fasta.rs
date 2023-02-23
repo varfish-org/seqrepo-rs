@@ -93,7 +93,6 @@ impl FastaDir {
 
         Ok(stmt.query_row([&seq_id], |row| {
             let added: String = row.get(3)?;
-            println!("{}", &added);
             let added = NaiveDateTime::parse_from_str(&added, "%Y-%m-%d %H:%M:%S")
                 .expect("could not convert timestamp");
 

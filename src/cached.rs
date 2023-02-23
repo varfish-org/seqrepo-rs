@@ -9,7 +9,7 @@ use std::{
     collections::HashMap,
     fs::File,
     io::{BufReader, BufWriter},
-    path::PathBuf,
+    path::Path,
     rc::Rc,
 };
 
@@ -58,13 +58,16 @@ pub struct CacheReadingSeqRepo {
 }
 
 impl CacheReadingSeqRepo {
-    pub fn new(path: &PathBuf) -> Result<Self, anyhow::Error> {
+    pub fn new<P>(path: P) -> Result<Self, anyhow::Error>
+    where
+        P: AsRef<Path>,
+    {
         Ok(Self {
-            cache: Self::read_cache(path)?,
+            cache: Self::read_cache(path.as_ref())?,
         })
     }
 
-    fn read_cache(path: &PathBuf) -> Result<HashMap<String, String>, anyhow::Error> {
+    fn read_cache(path: &Path) -> Result<HashMap<String, String>, anyhow::Error> {
         let mut reader = File::open(path)
             .map(BufReader::new)
             .map(fasta::Reader::new)?;
@@ -100,7 +103,13 @@ impl SeqRepoInterface for CacheReadingSeqRepo {
 fn build_key(alias_or_seq_id: &AliasOrSeqId, begin: Option<usize>, end: Option<usize>) -> String {
     let name = match alias_or_seq_id {
         AliasOrSeqId::Alias { value, namespace } => match namespace {
-            Some(namespace) => format!("{}:{}", namespace, value),
+            Some(namespace) => {
+                if namespace.is_empty() {
+                    value.clone()
+                } else {
+                    format!("{}:{}", namespace, value)
+                }
+            }
             None => value.clone(),
         },
         AliasOrSeqId::SeqId(seqid) => seqid.clone(),
@@ -113,5 +122,100 @@ fn build_key(alias_or_seq_id: &AliasOrSeqId, begin: Option<usize>, end: Option<u
         (Some(begin), Some(end)) => format!("{}-{}", begin, end),
     };
 
-    format!("{}:{}", &name, &suffix)
+    if suffix.is_empty() {
+        name
+    } else {
+        format!("{}:{}", &name, &suffix)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::{
+        fs::{read_to_string, File},
+        path::PathBuf,
+    };
+
+    use pretty_assertions::assert_eq;
+    use temp_testdir::TempDir;
+
+    use crate::{AliasOrSeqId, CacheReadingSeqRepo, Interface, SeqRepo};
+
+    use super::CacheWritingSeqRepo;
+
+    fn test_fetch(sr: &impl Interface) -> Result<(), anyhow::Error> {
+        let alias = "NM_001304430.2";
+        let aos = AliasOrSeqId::Alias {
+            value: alias.to_string(),
+            namespace: None,
+        };
+
+        assert_eq!(
+            sr.fetch_sequence(&aos)?,
+            "ACTGCTGAGCTGGGAGATGTCGGCGGCGTGTTGGGAGGAACCGTGGGGTCTTCCCGGCGGCTTT\
+            GCGAAGCGGGTCCTGGTGACCGGCGGTGCTGGTTTCATGTAGGTAATGGCGCCGCTAGCCAAGCA\
+            GTGGCTCCCCAGAAACCCCTACCTTTTCCCGCAGCTCTGCTTGCCCTAGTGCATCACATATGATT\
+            GTCTCTTTAGTGGAAGATTATCCAAACTATATGATCATAAATCTAGACAAGCTGGATTACTGTGC\
+            AAGCTTGAAGAATCTTGAAACCATTTCTAACAAACAGAACTACAAATTTATACAGGGTGACATAT\
+            GTGATTCTCACTTTGTGAAACTGCTTTTTGAAACAGAGAAAATAGATATAGTACTACATTTTGCC\
+            GCACAAACACATGTAGATCTTTCATTCGTACGTGCCTTTGAGTTTACCTATGTTAATGTTTATGG\
+            CACTCACGTTTTGGTAAGTGCTGCTCATGAAGCCAGAGTGGAGAAGTTTATTTATGTCAGCACAG\
+            ATGAAGTATATGGTGGCAGTCTTGATAAGGAATTTGATGAATCTTCACCCAAACAACCTACAAAT\
+            CCTTATGCATCATCTAAAGCAGCTGCTGAATGTTTTGTACAGTCTTACTGGGAACAATATAAGTT\
+            TCCAGTTGTCATCACAAGAAGCAGTAATGTTTATGGACCACATCAATATCCAGAAAAGGTTATTC\
+            CAAAATTTATATCTTTGCTACAGCACAACAGGAAATGTTGCATTCATGGGTCAGGGCTTCAAACA\
+            AGAAACTTCCTTTATGCTACTGATGTTGTAGAAGCATTTCTCACTGTCCTCAAAAAAGGGAAACC\
+            AGGTGAAATTTATAACATCGGAACCAATTTTGAAATGTCAGTTGTCCAGCTTGCCAAAGAACTAA\
+            TACAACTGATCAAAGAGACCAATTCAGAGTCTGAAATGGAAAATTGGGTTGATTATGTTAATGAT\
+            AGACCCACCAATGACATGAGATACCCAATGAAGTCAGAAAAAATACATGGCTTAGGATGGAGACC\
+            TAAAGTGCCTTGGAAAGAAGGAATAAAGAAAACAATTGAATGGTACAGAGAGAATTTTCACAACT\
+            GGAAGAATGTGGAAAAGGCATTAGAACCCTTTCCGGTATAATCACCATTTATATAGTCGAGACAG\
+            TTGTCAAAGAAGAAAGTTATCCTACCTCGCCAAGTGGTATGAAATTAAGTGACCAAATGAAGTGC\
+            ACTCTTTTCTTTTGGAATTAGATTCATGACTTTCTGTATAAAATTCAAATGCAGAATGCCTCAAT\
+            CTTTGGGAGAGTTTCAGTACTGGCATAGAATTTAAATGTCAAAATTCTTTCTGAAACCCTTTCTC\
+            CTAGAAACTAGGAAATAATAGGTGTAGAAGACTCTCCCTAAGGGTAGCCAGGAAGAAGTCTCCTG\
+            ATTCGGACAACCATGAGGGGTAGTGGTGCTAGGGAGAAGGCAACCTTCACTGGTTTTGAACTCAG\
+            TGCCTAAGAAAGTCTCTGAAATGTTCGTTTTTAGGCAATATAGGATGTCTTAGGCCCTAATTCAC\
+            CATTTCTTTTTTAAGATCTGATATGCTATCATTGCCTTAATAATGGAACAAAATAGAAGCATATC\
+            TAACACTTTTTAAATTGATAATTTTGTAAAATTGATTACGTTGAATGCTTTTTAAGAGAAGTGTG\
+            TAAAGTTTTTATATTTTCACAATTAACGTATGTAAAACCTTGTATCAGAAATTTATCATGTTTAC\
+            TGTTTAAAATGATTGTATTTATAAAATTGTCAATATCTTAATGTATTTAATGTAGAATATTGCTT\
+            TTTAAAATAATGTTTTTATTTTGCTGTAGAAAAATAAAAAAAAATTTGATTATA"
+        );
+        assert_eq!(sr.fetch_sequence_part(&aos, None, Some(4))?, "ACTG");
+        assert_eq!(sr.fetch_sequence_part(&aos, Some(1869), None)?, "TATA");
+        assert_eq!(sr.fetch_sequence_part(&aos, Some(0), Some(4))?, "ACTG");
+
+        Ok(())
+    }
+
+    #[test]
+    fn cache_writing() -> Result<(), anyhow::Error> {
+        let temp = TempDir::default();
+
+        let sr = SeqRepo::new("tests/data/seqrepo", "latest")?;
+        let mut cache_path = PathBuf::from(temp.as_ref());
+        cache_path.push("cache.fasta");
+        let cache = File::create(cache_path.clone())?;
+
+        {
+            let cw = CacheWritingSeqRepo::new(sr, cache);
+            test_fetch(&cw)?;
+        }
+
+        assert_eq!(
+            read_to_string(&cache_path).unwrap(),
+            read_to_string("tests/data/cached/cache.fasta").unwrap(),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn cache_reading() -> Result<(), anyhow::Error> {
+        let cr = CacheReadingSeqRepo::new("tests/data/cached/cache.fasta")?;
+        test_fetch(&cr)?;
+
+        Ok(())
+    }
 }
