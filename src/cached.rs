@@ -50,7 +50,10 @@ impl SeqRepoInterface for CacheWritingSeqRepo {
         }
 
         let value = self.repo.fetch_sequence_part(alias_or_seq_id, begin, end)?;
-        self.cache.as_ref().borrow_mut().insert(key.clone(), value.clone());
+        self.cache
+            .as_ref()
+            .borrow_mut()
+            .insert(key.clone(), value.clone());
         self.writer.borrow_mut().write_record(&fasta::Record::new(
             fasta::record::Definition::new(key, None),
             fasta::record::Sequence::from(value.as_bytes().to_vec()),
