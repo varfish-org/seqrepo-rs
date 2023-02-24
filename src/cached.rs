@@ -20,16 +20,19 @@ use crate::repo::{AliasOrSeqId, Interface as SeqRepoInterface, SeqRepo};
 /// Sequence repository reading from actual implementation and writing to a cache.
 pub struct CacheWritingSeqRepo {
     /// Path to the cache file to write to.
-    cache: Rc<RefCell<fasta::Writer<BufWriter<File>>>>,
+    writer: Rc<RefCell<fasta::Writer<BufWriter<File>>>>,
     /// The actual implementation used for reading.
     repo: SeqRepo,
+    /// The internal cache built when writing.
+    cache: Rc<RefCell<HashMap<String, String>>>,
 }
 
 impl CacheWritingSeqRepo {
     pub fn new(repo: SeqRepo, cache: File) -> Self {
         Self {
             repo,
-            cache: Rc::new(RefCell::new(fasta::Writer::new(BufWriter::new(cache)))),
+            writer: Rc::new(RefCell::new(fasta::Writer::new(BufWriter::new(cache)))),
+            cache: Rc::new(RefCell::new(HashMap::new())),
         }
     }
 }
@@ -42,8 +45,16 @@ impl SeqRepoInterface for CacheWritingSeqRepo {
         end: Option<usize>,
     ) -> Result<String, anyhow::Error> {
         let key = build_key(alias_or_seq_id, begin, end);
+        if let Some(value) = self.cache.as_ref().borrow().get(&key) {
+            return Ok(value.to_owned());
+        }
+
         let value = self.repo.fetch_sequence_part(alias_or_seq_id, begin, end)?;
-        self.cache.borrow_mut().write_record(&fasta::Record::new(
+        self.cache
+            .as_ref()
+            .borrow_mut()
+            .insert(key.clone(), value.clone());
+        self.writer.borrow_mut().write_record(&fasta::Record::new(
             fasta::record::Definition::new(key, None),
             fasta::record::Sequence::from(value.as_bytes().to_vec()),
         ))?;
@@ -200,6 +211,8 @@ mod test {
 
         {
             let cw = CacheWritingSeqRepo::new(sr, cache);
+            test_fetch(&cw)?;
+            // fetching twice will not change cache content
             test_fetch(&cw)?;
         }
 
