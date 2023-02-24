@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.2.1](https://www.github.com/bihealth/seqrepo-rs/compare/v0.2.0...v0.2.1) (2023-02-24)
+
+
+### Bug Fixes
+
+* do not write out values twice when cache writing ([#24](https://www.github.com/bihealth/seqrepo-rs/issues/24)) ([#25](https://www.github.com/bihealth/seqrepo-rs/issues/25)) ([d497e53](https://www.github.com/bihealth/seqrepo-rs/commit/d497e53c19a3a1165fb11f53d0c4b6cd11da62b1))
+
 ## [0.2.0](https://www.github.com/bihealth/seqrepo-rs/compare/v0.1.2...v0.2.0) (2023-02-23)
 
 
