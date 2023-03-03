@@ -207,7 +207,7 @@ mod test {
             TTTAAAATAATGTTTTTATTTTGCTGTAGAAAAATAAAAAAAAATTTGATTATA"
         );
         assert_eq!(sr.fetch_sequence_part(&aos, None, Some(4))?, "ACTG");
-        assert_eq!(sr.fetch_sequence_part(&aos, Some(1869), None)?, "TTTA");
+        assert_eq!(sr.fetch_sequence_part(&aos, Some(1869), None)?, "TATA");
         assert_eq!(sr.fetch_sequence_part(&aos, Some(0), Some(4))?, "ACTG");
 
         Ok(())
