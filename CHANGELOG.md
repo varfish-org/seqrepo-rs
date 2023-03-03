@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.2.2](https://www.github.com/bihealth/seqrepo-rs/compare/v0.2.1...v0.2.2) (2023-03-03)
+
+
+### Bug Fixes
+
+* open options to cache FASTA file ([#30](https://www.github.com/bihealth/seqrepo-rs/issues/30)) ([983e182](https://www.github.com/bihealth/seqrepo-rs/commit/983e182ec720e09b2e3abca13fe75dfe3b83aa79))
+
 ### [0.2.1](https://www.github.com/bihealth/seqrepo-rs/compare/v0.2.0...v0.2.1) (2023-02-24)
 
 
