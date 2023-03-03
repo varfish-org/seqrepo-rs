@@ -7,7 +7,7 @@
 use std::{
     cell::RefCell,
     collections::HashMap,
-    fs::File,
+    fs::{File, OpenOptions},
     io::{BufReader, BufWriter},
     path::Path,
     rc::Rc,
@@ -28,12 +28,26 @@ pub struct CacheWritingSeqRepo {
 }
 
 impl CacheWritingSeqRepo {
-    pub fn new(repo: SeqRepo, cache: File) -> Self {
-        Self {
+    pub fn new<P>(repo: SeqRepo, cache_path: P) -> Result<Self, anyhow::Error>
+    where
+        P: AsRef<Path>,
+    {
+        let cache = if cache_path.as_ref().exists() {
+            Rc::new(RefCell::new(CacheReadingSeqRepo::read_cache(
+                cache_path.as_ref(),
+            )?))
+        } else {
+            Rc::new(RefCell::new(HashMap::new()))
+        };
+        let file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&cache_path)?;
+        Ok(Self {
             repo,
-            writer: Rc::new(RefCell::new(fasta::Writer::new(BufWriter::new(cache)))),
-            cache: Rc::new(RefCell::new(HashMap::new())),
-        }
+            writer: Rc::new(RefCell::new(fasta::Writer::new(BufWriter::new(file)))),
+            cache,
+        })
     }
 }
 
@@ -142,10 +156,9 @@ fn build_key(alias_or_seq_id: &AliasOrSeqId, begin: Option<usize>, end: Option<u
 
 #[cfg(test)]
 mod test {
-    use std::{
-        fs::{read_to_string, File},
-        path::PathBuf,
-    };
+    use test_log::test;
+
+    use std::{fs::read_to_string, path::PathBuf};
 
     use pretty_assertions::assert_eq;
     use temp_testdir::TempDir;
@@ -194,7 +207,7 @@ mod test {
             TTTAAAATAATGTTTTTATTTTGCTGTAGAAAAATAAAAAAAAATTTGATTATA"
         );
         assert_eq!(sr.fetch_sequence_part(&aos, None, Some(4))?, "ACTG");
-        assert_eq!(sr.fetch_sequence_part(&aos, Some(1869), None)?, "TATA");
+        assert_eq!(sr.fetch_sequence_part(&aos, Some(1869), None)?, "TTTA");
         assert_eq!(sr.fetch_sequence_part(&aos, Some(0), Some(4))?, "ACTG");
 
         Ok(())
@@ -207,10 +220,9 @@ mod test {
         let sr = SeqRepo::new("tests/data/seqrepo", "latest")?;
         let mut cache_path = PathBuf::from(temp.as_ref());
         cache_path.push("cache.fasta");
-        let cache = File::create(cache_path.clone())?;
 
         {
-            let cw = CacheWritingSeqRepo::new(sr, cache);
+            let cw = CacheWritingSeqRepo::new(sr, &cache_path)?;
             test_fetch(&cw)?;
             // fetching twice will not change cache content
             test_fetch(&cw)?;
