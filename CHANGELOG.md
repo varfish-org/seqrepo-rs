@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.2.3](https://www.github.com/bihealth/seqrepo-rs/compare/v0.2.2...v0.2.3) (2023-03-14)
+
+
+### Bug Fixes
+
+* print SQL query in trace level only ([#32](https://www.github.com/bihealth/seqrepo-rs/issues/32)) ([#33](https://www.github.com/bihealth/seqrepo-rs/issues/33)) ([1aac31e](https://www.github.com/bihealth/seqrepo-rs/commit/1aac31e30d86cf6d5d77ce75b2cfbaba28410044))
+
 ### [0.2.2](https://www.github.com/bihealth/seqrepo-rs/compare/v0.2.1...v0.2.2) (2023-03-03)
 
 
