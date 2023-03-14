@@ -184,7 +184,7 @@ impl AliasDb {
             sql.push_str(&clauses.join(" AND "));
         }
         sql.push_str(" ORDER BY seq_id, namespace, alias");
-        debug!("Executing: {:?} with params {:?}", &sql, &params);
+        trace!("Executing: {:?} with params {:?}", &sql, &params);
 
         let mut stmt = self.conn.prepare(&sql)?;
 
