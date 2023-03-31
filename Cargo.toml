@@ -17,7 +17,7 @@ anyhow = "1.0.69"
 chrono = "0.4.23"
 log = "0.4.17"
 noodles = { version = "0.34.0", features = ["bgzf", "fasta", "core"] }
-rusqlite = "0.28.0"
+rusqlite = "0.29.0"
 strum = { version = "0.24.1", features = ["derive", "strum_macros"] }
 textwrap = "0.16.0"
 tracing = "0.1.37"
