@@ -3,6 +3,7 @@
 [![Crates.io](https://img.shields.io/crates/l/seqrepo.svg)](https://crates.io/crates/seqrepo)
 [![CI](https://github.com/bihealth/seqrepo-rs/actions/workflows/rust.yml/badge.svg)](https://github.com/bihealth/seqrepo-rs/actions/workflows/rust.yml)
 [![codecov](https://codecov.io/gh/bihealth/seqrepo-rs/branch/main/graph/badge.svg?token=aZchhLWdzt)](https://codecov.io/gh/bihealth/seqrepo-rs)
+[![DOI](https://zenodo.org/badge/602121605.svg)](https://zenodo.org/badge/latestdoi/602121605)
 
 # seqrepo-rs
 
