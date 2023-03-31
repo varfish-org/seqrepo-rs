@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use chrono::NaiveDateTime;
 use rusqlite::{types::Value, Connection, OpenFlags};
-use tracing::{debug, trace};
+use tracing::trace;
 
 /// Namespaces as stored in the database.
 ///
