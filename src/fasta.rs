@@ -236,7 +236,7 @@ mod test {
 }
 
 // <LICENSE>
-// Copyright 2023 hgvs-rs Contributors
+// Copyright 2023 seqrepo-rs Contributors
 // Copyright 2016 biocommons.seqrepo Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
