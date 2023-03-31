@@ -8,10 +8,10 @@ This is a port of [biocommons/seqrepo](https://github.com/biocommons/seqrepo) to
 At the moment, only read access has been implemented.
 For downloading etc., you will have to use the Python package.
 
-## Features
+## Running the CLI Example
 
-You can use the following features:
+The library ships with an example called `cli` that you can use to query a seqrepo.
 
-- `full` -- all features
-- `tracing` -- do tracing logging via `tracing`
-- `cli` -- a simple command line interface
+```
+# cargo run --example cli -- --help
+```
