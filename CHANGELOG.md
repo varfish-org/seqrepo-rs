@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://www.github.com/bihealth/seqrepo-rs/compare/v0.2.3...v0.3.0) (2023-03-31)
+
+
+### Features
+
+* moving cli to be an example ([#35](https://www.github.com/bihealth/seqrepo-rs/issues/35)) ([#36](https://www.github.com/bihealth/seqrepo-rs/issues/36)) ([0389c65](https://www.github.com/bihealth/seqrepo-rs/commit/0389c65bdeede3eb9b4ba459a227b9f075408644))
+
 ### [0.2.3](https://www.github.com/bihealth/seqrepo-rs/compare/v0.2.2...v0.2.3) (2023-03-14)
 
 
