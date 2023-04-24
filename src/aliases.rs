@@ -2,6 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
+use crate::error::Error;
 use chrono::NaiveDateTime;
 use rusqlite::{types::Value, Connection, OpenFlags};
 use tracing::trace;
@@ -89,7 +90,7 @@ pub struct AliasDb {
 }
 
 impl AliasDb {
-    pub fn new<P>(sr_root_dir: &P, sr_instance: &str) -> Result<Self, anyhow::Error>
+    pub fn new<P>(sr_root_dir: &P, sr_instance: &str) -> Result<Self, Error>
     where
         P: AsRef<Path>,
     {
@@ -104,18 +105,19 @@ impl AliasDb {
         })
     }
 
-    fn new_connection(sr_root_dir: &Path, sr_instance: &str) -> Result<Connection, anyhow::Error> {
+    fn new_connection(sr_root_dir: &Path, sr_instance: &str) -> Result<Connection, Error> {
         let db_path = sr_root_dir.join(sr_instance).join("aliases.sqlite3");
-        Ok(Connection::open_with_flags(
+        Connection::open_with_flags(
             db_path,
             OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
-        )?)
+        )
+        .map_err(|e| Error::AliasDbConnect(e.to_string()))
     }
 
     /// Try to clone the `AliasDb`.
     ///
     /// A new sqlite connection must be made so this can fail.
-    pub fn try_clone(&self) -> Result<Self, anyhow::Error> {
+    pub fn try_clone(&self) -> Result<Self, Error> {
         Ok(Self {
             sr_root_dir: self.sr_root_dir.clone(),
             sr_instance: self.sr_instance.clone(),
@@ -131,9 +133,9 @@ impl AliasDb {
     ///
     /// If `query.alias` or `query.seqid` contain `%`, the `like` comparison operator is
     // used.  Otherwise arguments must match exactly.
-    pub fn find<F>(&self, query: &Query, mut f: F) -> Result<(), anyhow::Error>
+    pub fn find<F>(&self, query: &Query, mut f: F) -> Result<(), Error>
     where
-        F: FnMut(Result<AliasDbRecord, anyhow::Error>),
+        F: FnMut(Result<AliasDbRecord, Error>),
     {
         trace!("AliasDb::find({:?})", &query);
         fn eq_or_like(s: &str) -> &'static str {
@@ -186,22 +188,28 @@ impl AliasDb {
         sql.push_str(" ORDER BY seq_id, namespace, alias");
         trace!("Executing: {:?} with params {:?}", &sql, &params);
 
-        let mut stmt = self.conn.prepare(&sql)?;
+        let mut stmt = self
+            .conn
+            .prepare(&sql)
+            .map_err(|e| Error::AliasDbQuery(format!("{}", e)))?;
 
-        for row in stmt.query_map(rusqlite::params_from_iter(params), |row| {
-            let added: String = row.get(3)?;
-            let added = NaiveDateTime::parse_from_str(&added, "%Y-%m-%d %H:%M:%S")
-                .expect("could not convert timestamp");
-            Ok(AliasDbRecord {
-                seqalias_id: row.get(0)?,
-                seqid: row.get(1)?,
-                alias: row.get(2)?,
-                added,
-                is_current: row.get(4)?,
-                namespace: Namespace::from(row.get(5)?),
+        let rows = stmt
+            .query_map(rusqlite::params_from_iter(params), |row| {
+                let added: String = row.get(3)?;
+                let added = NaiveDateTime::parse_from_str(&added, "%Y-%m-%d %H:%M:%S")
+                    .expect("could not convert timestamp");
+                Ok(AliasDbRecord {
+                    seqalias_id: row.get(0)?,
+                    seqid: row.get(1)?,
+                    alias: row.get(2)?,
+                    added,
+                    is_current: row.get(4)?,
+                    namespace: Namespace::from(row.get(5)?),
+                })
             })
-        })? {
-            f(row.map_err(|e| anyhow::anyhow!("Error on row: {}", &e)));
+            .map_err(|e| Error::AliasDbExec(format!("{}", e)))?;
+        for row in rows {
+            f(row.map_err(|e| Error::AliasDbQuery(format!("Error on row: {}", &e))));
         }
 
         Ok(())
@@ -210,13 +218,14 @@ impl AliasDb {
 
 #[cfg(test)]
 mod test {
+    use anyhow::Error;
     use std::path::PathBuf;
 
     use pretty_assertions::assert_eq;
 
     use super::{AliasDb, Namespace, Query};
 
-    fn run(aliases: &AliasDb) -> Result<(), anyhow::Error> {
+    fn run(aliases: &AliasDb) -> Result<(), Error> {
         let mut values = Vec::new();
 
         aliases.find(&Query::default(), |record| {
@@ -238,20 +247,20 @@ mod test {
     }
 
     #[test]
-    fn smoke_test() -> Result<(), anyhow::Error> {
+    fn smoke_test() -> Result<(), Error> {
         let aliases = AliasDb::new(&PathBuf::from("tests/data"), "aliases")?;
         run(&aliases)
     }
 
     #[test]
-    fn try_clone() -> Result<(), anyhow::Error> {
+    fn try_clone() -> Result<(), Error> {
         let aliases = AliasDb::new(&PathBuf::from("tests/data"), "aliases")?;
         let second = aliases.try_clone()?;
         run(&second)
     }
 
     #[test]
-    fn find_wildcard() -> Result<(), anyhow::Error> {
+    fn find_wildcard() -> Result<(), Error> {
         let aliases = AliasDb::new(&PathBuf::from("tests/data"), "aliases")?;
 
         let mut values = Vec::new();
@@ -283,7 +292,7 @@ mod test {
     }
 
     #[test]
-    fn find_no_wildcard() -> Result<(), anyhow::Error> {
+    fn find_no_wildcard() -> Result<(), Error> {
         let aliases = AliasDb::new(&PathBuf::from("tests/data"), "aliases")?;
 
         let mut values = Vec::new();

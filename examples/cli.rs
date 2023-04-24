@@ -6,8 +6,8 @@ use textwrap::wrap;
 use tracing::debug;
 
 use seqrepo::{
-    AliasDbRecord, Interface, Namespace as LibNamespace, NamespacedAlias as LibNamespacedAlias,
-    Query, SeqRepo,
+    AliasDbRecord, Error, Interface, Namespace as LibNamespace,
+    NamespacedAlias as LibNamespacedAlias, Query, SeqRepo,
 };
 
 /// Commonly used command line arguments.
@@ -110,7 +110,7 @@ struct ExportArgs {
 }
 
 /// Implementation of "export" command.
-fn main_export(common_args: &CommonArgs, args: &ExportArgs) -> Result<(), anyhow::Error> {
+fn main_export(common_args: &CommonArgs, args: &ExportArgs) -> Result<(), Error> {
     debug!("common_args = {:?}", &common_args);
     debug!("args = {:?}", &args);
 
@@ -147,7 +147,7 @@ fn main_export(common_args: &CommonArgs, args: &ExportArgs) -> Result<(), anyhow
         }
     }
 
-    let mut handle_record = |record: Result<AliasDbRecord, anyhow::Error>| {
+    let mut handle_record = |record: Result<AliasDbRecord, Error>| {
         let record = record.unwrap();
         if !group.is_empty() && group[0].seqid != record.seqid {
             print_and_clear_group(&seq_repo, &mut group);
@@ -169,7 +169,7 @@ fn main_export(common_args: &CommonArgs, args: &ExportArgs) -> Result<(), anyhow
     Ok(())
 }
 
-pub fn main() -> Result<(), anyhow::Error> {
+pub fn main() -> Result<(), Error> {
     let cli = Cli::parse();
 
     // Build a tracing subscriber according to the configuration in `cli.common`.
@@ -195,7 +195,7 @@ pub fn main() -> Result<(), anyhow::Error> {
             }
         }
 
-        Ok::<(), anyhow::Error>(())
+        Ok::<(), Error>(())
     })?;
 
     debug!("All done! Have a nice day.");
@@ -211,7 +211,7 @@ mod test {
     use crate::{CommonArgs, ExportArgs};
 
     #[test]
-    fn run_cmd() -> Result<(), anyhow::Error> {
+    fn run_cmd() -> Result<(), Error> {
         main_export(
             &CommonArgs {
                 verbose: Verbosity::new(0, 0),
