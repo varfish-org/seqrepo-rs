@@ -15,6 +15,7 @@ use std::{
 
 use noodles::fasta;
 
+use crate::error::Error;
 use crate::repo::{AliasOrSeqId, Interface as SeqRepoInterface, SeqRepo};
 
 /// Sequence repository reading from actual implementation and writing to a cache.
@@ -28,7 +29,7 @@ pub struct CacheWritingSeqRepo {
 }
 
 impl CacheWritingSeqRepo {
-    pub fn new<P>(repo: SeqRepo, cache_path: P) -> Result<Self, anyhow::Error>
+    pub fn new<P>(repo: SeqRepo, cache_path: P) -> Result<Self, Error>
     where
         P: AsRef<Path>,
     {
@@ -42,7 +43,8 @@ impl CacheWritingSeqRepo {
         let file = OpenOptions::new()
             .create(true)
             .append(true)
-            .open(&cache_path)?;
+            .open(&cache_path)
+            .map_err(|e| Error::SeqSepoCacheOpenWrite(e.to_string()))?;
         Ok(Self {
             repo,
             writer: Rc::new(RefCell::new(fasta::Writer::new(BufWriter::new(file)))),
@@ -57,7 +59,7 @@ impl SeqRepoInterface for CacheWritingSeqRepo {
         alias_or_seq_id: &AliasOrSeqId,
         begin: Option<usize>,
         end: Option<usize>,
-    ) -> Result<String, anyhow::Error> {
+    ) -> Result<String, Error> {
         let key = build_key(alias_or_seq_id, begin, end);
         if let Some(value) = self.cache.as_ref().borrow().get(&key) {
             return Ok(value.to_owned());
@@ -68,10 +70,13 @@ impl SeqRepoInterface for CacheWritingSeqRepo {
             .as_ref()
             .borrow_mut()
             .insert(key.clone(), value.clone());
-        self.writer.borrow_mut().write_record(&fasta::Record::new(
-            fasta::record::Definition::new(key, None),
-            fasta::record::Sequence::from(value.as_bytes().to_vec()),
-        ))?;
+        self.writer
+            .borrow_mut()
+            .write_record(&fasta::Record::new(
+                fasta::record::Definition::new(key, None),
+                fasta::record::Sequence::from(value.as_bytes().to_vec()),
+            ))
+            .map_err(|e| Error::SeqSepoCacheWrite(e.to_string()))?;
         Ok(value)
     }
 }
@@ -83,7 +88,7 @@ pub struct CacheReadingSeqRepo {
 }
 
 impl CacheReadingSeqRepo {
-    pub fn new<P>(path: P) -> Result<Self, anyhow::Error>
+    pub fn new<P>(path: P) -> Result<Self, Error>
     where
         P: AsRef<Path>,
     {
@@ -92,17 +97,20 @@ impl CacheReadingSeqRepo {
         })
     }
 
-    fn read_cache(path: &Path) -> Result<HashMap<String, String>, anyhow::Error> {
+    fn read_cache(path: &Path) -> Result<HashMap<String, String>, Error> {
         let mut reader = File::open(path)
             .map(BufReader::new)
-            .map(fasta::Reader::new)?;
+            .map(fasta::Reader::new)
+            .map_err(|e| Error::SeqSepoCacheOpenRead(e.to_string()))?;
 
         let mut result = HashMap::new();
         for record in reader.records() {
-            let record = record?;
+            let record = record.map_err(|e| Error::SeqSepoCacheRead(e.to_string()))?;
             result.insert(
                 record.name().to_string(),
-                std::str::from_utf8(record.sequence().as_ref())?.to_string(),
+                std::str::from_utf8(record.sequence().as_ref())
+                    .map_err(|e| Error::SeqSepoCacheOpenRead(e.to_string()))?
+                    .to_string(),
             );
         }
         Ok(result)
@@ -115,12 +123,12 @@ impl SeqRepoInterface for CacheReadingSeqRepo {
         alias_or_seq_id: &AliasOrSeqId,
         begin: Option<usize>,
         end: Option<usize>,
-    ) -> Result<String, anyhow::Error> {
+    ) -> Result<String, Error> {
         let key = build_key(alias_or_seq_id, begin, end);
         if let Some(seq) = self.cache.get(&key) {
             Ok(seq.clone())
         } else {
-            Err(anyhow::anyhow!("Key {} not found in cache.", &key))
+            Err(Error::SeqSepoCacheKey(key))
         }
     }
 }
@@ -156,6 +164,7 @@ fn build_key(alias_or_seq_id: &AliasOrSeqId, begin: Option<usize>, end: Option<u
 
 #[cfg(test)]
 mod test {
+    use anyhow::Error;
     use test_log::test;
 
     use std::{fs::read_to_string, path::PathBuf};
@@ -167,7 +176,7 @@ mod test {
 
     use super::CacheWritingSeqRepo;
 
-    fn test_fetch(sr: &impl Interface) -> Result<(), anyhow::Error> {
+    fn test_fetch(sr: &impl Interface) -> Result<(), Error> {
         let alias = "NM_001304430.2";
         let aos = AliasOrSeqId::Alias {
             value: alias.to_string(),
@@ -214,7 +223,7 @@ mod test {
     }
 
     #[test]
-    fn cache_writing() -> Result<(), anyhow::Error> {
+    fn cache_writing() -> Result<(), Error> {
         let temp = TempDir::default();
 
         let sr = SeqRepo::new("tests/data/seqrepo", "latest")?;
@@ -237,7 +246,7 @@ mod test {
     }
 
     #[test]
-    fn cache_reading() -> Result<(), anyhow::Error> {
+    fn cache_reading() -> Result<(), Error> {
         let cr = CacheReadingSeqRepo::new("tests/data/cached/cache.fasta")?;
         test_fetch(&cr)?;
 

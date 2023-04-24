@@ -2,12 +2,13 @@
 
 use std::path::{Path, PathBuf};
 
+use crate::error::Error;
 use crate::{AliasDb, FastaDir, Namespace, Query};
 
 /// Trait describing the interface of a sequence repository.
 pub trait Interface {
     /// Fetch part sequence given an alias.
-    fn fetch_sequence(&self, alias_or_seq_id: &AliasOrSeqId) -> Result<String, anyhow::Error> {
+    fn fetch_sequence(&self, alias_or_seq_id: &AliasOrSeqId) -> Result<String, Error> {
         self.fetch_sequence_part(alias_or_seq_id, None, None)
     }
 
@@ -17,7 +18,7 @@ pub trait Interface {
         alias_or_seq_id: &AliasOrSeqId,
         begin: Option<usize>,
         end: Option<usize>,
-    ) -> Result<String, anyhow::Error>;
+    ) -> Result<String, Error>;
 }
 
 /// Provide (read-only) access to a `seqrepo` sequence repository.
@@ -43,7 +44,7 @@ pub enum AliasOrSeqId {
 
 impl SeqRepo {
     /// Create new `SeqRepo` at the given path.
-    pub fn new<P>(path: P, instance: &str) -> Result<Self, anyhow::Error>
+    pub fn new<P>(path: P, instance: &str) -> Result<Self, Error>
     where
         P: AsRef<Path>,
     {
@@ -87,7 +88,7 @@ impl Interface for SeqRepo {
         alias_or_seq_id: &AliasOrSeqId,
         begin: Option<usize>,
         end: Option<usize>,
-    ) -> Result<String, anyhow::Error> {
+    ) -> Result<String, Error> {
         let seq_ids = match alias_or_seq_id {
             AliasOrSeqId::Alias { value, namespace } => {
                 let query = Query {
@@ -100,15 +101,11 @@ impl Interface for SeqRepo {
                     .find(&query, |record| seq_ids.push(record.unwrap().seqid))?;
 
                 if seq_ids.is_empty() {
-                    return Err(anyhow::anyhow!(
-                        "Could not resolve alias {} to seqid!",
-                        value
-                    ));
+                    return Err(Error::AliasDbResolve(value.clone()));
                 } else if seq_ids.len() > 1 {
-                    return Err(anyhow::anyhow!(
-                        "Alias {} resolved to multiple seqids: {:?}",
-                        value,
-                        &seq_ids
+                    return Err(Error::AliasDbResolutionAmbiguous(
+                        value.clone(),
+                        format!("{:?}", &seq_ids),
                     ));
                 }
 
@@ -124,9 +121,10 @@ impl Interface for SeqRepo {
 #[cfg(test)]
 mod test {
     use crate::{repo::Interface, AliasOrSeqId, SeqRepo};
+    use anyhow::Error;
 
     #[test]
-    fn seqrepo_smoke() -> Result<(), anyhow::Error> {
+    fn seqrepo_smoke() -> Result<(), Error> {
         let sr = SeqRepo::new("tests/data/seqrepo", "latest")?;
         assert_eq!(
             sr.root_dir().to_str().unwrap().to_string(),
@@ -140,7 +138,7 @@ mod test {
     }
 
     #[test]
-    fn fetch_sequence() -> Result<(), anyhow::Error> {
+    fn fetch_sequence() -> Result<(), Error> {
         let sr = SeqRepo::new("tests/data/seqrepo", "latest")?;
         let alias = "NM_001304430.2";
 
@@ -184,7 +182,7 @@ mod test {
     }
 
     #[test]
-    fn fetch_sequence_part() -> Result<(), anyhow::Error> {
+    fn fetch_sequence_part() -> Result<(), Error> {
         let sr = SeqRepo::new("tests/data/seqrepo", "latest")?;
         let alias = "NM_001304430.2";
 
