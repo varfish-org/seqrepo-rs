@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://www.github.com/bihealth/seqrepo-rs/compare/v0.3.0...v0.4.0) (2023-04-24)
+
+
+### Features
+
+* switch from anyhow to thiserr ([#45](https://www.github.com/bihealth/seqrepo-rs/issues/45)) ([#46](https://www.github.com/bihealth/seqrepo-rs/issues/46)) ([497c17a](https://www.github.com/bihealth/seqrepo-rs/commit/497c17ae308fc2c2e18b67e4adf7277dfd4e13f1))
+
 ## [0.3.0](https://www.github.com/bihealth/seqrepo-rs/compare/v0.2.3...v0.3.0) (2023-03-31)
 
 
