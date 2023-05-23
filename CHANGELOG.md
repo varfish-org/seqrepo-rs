@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://www.github.com/bihealth/seqrepo-rs/compare/v0.4.0...v0.5.0) (2023-05-23)
+
+
+### Features
+
+* losening dependencies ([#55](https://www.github.com/bihealth/seqrepo-rs/issues/55)) ([e467af5](https://www.github.com/bihealth/seqrepo-rs/commit/e467af5bb46f89004bdde791618bfaf017fa4eee))
+
 ## [0.4.0](https://www.github.com/bihealth/seqrepo-rs/compare/v0.3.0...v0.4.0) (2023-04-24)
 
 
