@@ -3,7 +3,7 @@
 use std::path::{Path, PathBuf};
 
 use chrono::NaiveDateTime;
-use noodles::core::{Position, Region};
+use noodles_core::{Position, Region};
 use rusqlite::{Connection, OpenFlags};
 
 use crate::error::Error;
@@ -131,15 +131,15 @@ impl FastaDir {
         let path_bgzip = self.root_dir.join(seqinfo.relpath);
         let path_bgzip = path_bgzip.as_path().to_str().unwrap();
 
-        let bgzf_index = noodles::bgzf::gzi::read(format!("{path_bgzip}.gzi"))
+        let bgzf_index = noodles_bgzf::gzi::read(format!("{path_bgzip}.gzi"))
             .map_err(|e| Error::SeqRepoGziOpen(e.to_string()))?;
-        let bgzf_reader = noodles::bgzf::indexed_reader::Builder::default()
+        let bgzf_reader = noodles_bgzf::indexed_reader::Builder::default()
             .set_index(bgzf_index)
             .build_from_path(path_bgzip)
             .map_err(|e| Error::SeqRepoBgzfOpen(e.to_string()))?;
-        let fai_index = noodles::fasta::fai::read(format!("{path_bgzip}.fai"))
+        let fai_index = noodles_fasta::fai::read(format!("{path_bgzip}.fai"))
             .map_err(|e| Error::SeqRepoFaiOpen(e.to_string()))?;
-        let mut fai_reader = noodles::fasta::indexed_reader::Builder::default()
+        let mut fai_reader = noodles_fasta::indexed_reader::Builder::default()
             .set_index(fai_index)
             .build_from_reader(bgzf_reader)
             .map_err(|e| Error::SeqRepoFastaOpen(e.to_string()))?;

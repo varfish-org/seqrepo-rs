@@ -13,15 +13,13 @@ use std::{
     rc::Rc,
 };
 
-use noodles::fasta;
-
 use crate::error::Error;
 use crate::repo::{AliasOrSeqId, Interface as SeqRepoInterface, SeqRepo};
 
 /// Sequence repository reading from actual implementation and writing to a cache.
 pub struct CacheWritingSeqRepo {
     /// Path to the cache file to write to.
-    writer: Rc<RefCell<fasta::Writer<BufWriter<File>>>>,
+    writer: Rc<RefCell<noodles_fasta::Writer<BufWriter<File>>>>,
     /// The actual implementation used for reading.
     repo: SeqRepo,
     /// The internal cache built when writing.
@@ -47,7 +45,9 @@ impl CacheWritingSeqRepo {
             .map_err(|e| Error::SeqSepoCacheOpenWrite(e.to_string()))?;
         Ok(Self {
             repo,
-            writer: Rc::new(RefCell::new(fasta::Writer::new(BufWriter::new(file)))),
+            writer: Rc::new(RefCell::new(noodles_fasta::Writer::new(BufWriter::new(
+                file,
+            )))),
             cache,
         })
     }
@@ -72,9 +72,9 @@ impl SeqRepoInterface for CacheWritingSeqRepo {
             .insert(key.clone(), value.clone());
         self.writer
             .borrow_mut()
-            .write_record(&fasta::Record::new(
-                fasta::record::Definition::new(key, None),
-                fasta::record::Sequence::from(value.as_bytes().to_vec()),
+            .write_record(&noodles_fasta::Record::new(
+                noodles_fasta::record::Definition::new(key, None),
+                noodles_fasta::record::Sequence::from(value.as_bytes().to_vec()),
             ))
             .map_err(|e| Error::SeqSepoCacheWrite(e.to_string()))?;
         Ok(value)
@@ -100,7 +100,7 @@ impl CacheReadingSeqRepo {
     fn read_cache(path: &Path) -> Result<HashMap<String, String>, Error> {
         let mut reader = File::open(path)
             .map(BufReader::new)
-            .map(fasta::Reader::new)
+            .map(noodles_fasta::Reader::new)
             .map_err(|e| Error::SeqSepoCacheOpenRead(e.to_string()))?;
 
         let mut result = HashMap::new();
