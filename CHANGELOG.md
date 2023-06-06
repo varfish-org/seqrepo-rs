@@ -1,5 +1,13 @@
 # Changelog
 
+### [0.5.1](https://www.github.com/bihealth/seqrepo-rs/compare/v0.5.0...v0.5.1) (2023-06-06)
+
+
+### Bug Fixes
+
+* depend on noodles-* rather noodles/features ([#60](https://www.github.com/bihealth/seqrepo-rs/issues/60)) ([#61](https://www.github.com/bihealth/seqrepo-rs/issues/61)) ([51406f2](https://www.github.com/bihealth/seqrepo-rs/commit/51406f2bfe1e6655a7e9eb390fea1feb9f27fb79))
+* removing unused dependencies ([#57](https://www.github.com/bihealth/seqrepo-rs/issues/57)) ([756c2be](https://www.github.com/bihealth/seqrepo-rs/commit/756c2bec2430fd72f302740bd2308e451ef62f38))
+
 ## [0.5.0](https://www.github.com/bihealth/seqrepo-rs/compare/v0.4.0...v0.5.0) (2023-05-23)
 
 
