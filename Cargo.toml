@@ -14,7 +14,9 @@ path = "src/lib.rs"
 
 [dependencies]
 chrono = "0.4"
-noodles = { version = "0.40", features = ["bgzf", "fasta", "core"] }
+noodles-bgzf = "0.22"
+noodles-core = "0.11"
+noodles-fasta = "0.23"
 rusqlite = "0.29"
 thiserror = "1.0"
 tracing = "0.1"
