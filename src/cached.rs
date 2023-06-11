@@ -44,9 +44,7 @@ impl CacheWritingSeqRepo {
             .map_err(|e| Error::SeqSepoCacheOpenWrite(e.to_string()))?;
         Ok(Self {
             repo,
-            writer: Arc::new(Mutex::new(noodles_fasta::Writer::new(BufWriter::new(
-                file,
-            )))),
+            writer: Arc::new(Mutex::new(noodles_fasta::Writer::new(BufWriter::new(file)))),
             cache,
         })
     }
@@ -60,17 +58,25 @@ impl SeqRepoInterface for CacheWritingSeqRepo {
         end: Option<usize>,
     ) -> Result<String, Error> {
         let key = build_key(alias_or_seq_id, begin, end);
-        if let Some(value) = self.cache.as_ref().lock().expect("could not acquire lock").get(&key) {
+        if let Some(value) = self
+            .cache
+            .as_ref()
+            .lock()
+            .expect("could not acquire lock")
+            .get(&key)
+        {
             return Ok(value.to_owned());
         }
 
         let value = self.repo.fetch_sequence_part(alias_or_seq_id, begin, end)?;
         self.cache
             .as_ref()
-            .lock().expect("could not acquire lock")
+            .lock()
+            .expect("could not acquire lock")
             .insert(key.clone(), value.clone());
         self.writer
-        .lock().expect("could not acquire lock")
+            .lock()
+            .expect("could not acquire lock")
             .write_record(&noodles_fasta::Record::new(
                 noodles_fasta::record::Definition::new(key, None),
                 noodles_fasta::record::Sequence::from(value.as_bytes().to_vec()),
