@@ -5,12 +5,11 @@
 //! then use the cache reading implementation.
 
 use std::{
-    cell::RefCell,
     collections::HashMap,
     fs::{File, OpenOptions},
     io::{BufReader, BufWriter},
     path::Path,
-    rc::Rc,
+    sync::{Arc, Mutex},
 };
 
 use crate::error::Error;
@@ -19,11 +18,11 @@ use crate::repo::{AliasOrSeqId, Interface as SeqRepoInterface, SeqRepo};
 /// Sequence repository reading from actual implementation and writing to a cache.
 pub struct CacheWritingSeqRepo {
     /// Path to the cache file to write to.
-    writer: Rc<RefCell<noodles_fasta::Writer<BufWriter<File>>>>,
+    writer: Arc<Mutex<noodles_fasta::Writer<BufWriter<File>>>>,
     /// The actual implementation used for reading.
     repo: SeqRepo,
     /// The internal cache built when writing.
-    cache: Rc<RefCell<HashMap<String, String>>>,
+    cache: Arc<Mutex<HashMap<String, String>>>,
 }
 
 impl CacheWritingSeqRepo {
@@ -32,11 +31,11 @@ impl CacheWritingSeqRepo {
         P: AsRef<Path>,
     {
         let cache = if cache_path.as_ref().exists() {
-            Rc::new(RefCell::new(CacheReadingSeqRepo::read_cache(
+            Arc::new(Mutex::new(CacheReadingSeqRepo::read_cache(
                 cache_path.as_ref(),
             )?))
         } else {
-            Rc::new(RefCell::new(HashMap::new()))
+            Arc::new(Mutex::new(HashMap::new()))
         };
         let file = OpenOptions::new()
             .create(true)
@@ -45,7 +44,7 @@ impl CacheWritingSeqRepo {
             .map_err(|e| Error::SeqSepoCacheOpenWrite(e.to_string()))?;
         Ok(Self {
             repo,
-            writer: Rc::new(RefCell::new(noodles_fasta::Writer::new(BufWriter::new(
+            writer: Arc::new(Mutex::new(noodles_fasta::Writer::new(BufWriter::new(
                 file,
             )))),
             cache,
@@ -61,17 +60,17 @@ impl SeqRepoInterface for CacheWritingSeqRepo {
         end: Option<usize>,
     ) -> Result<String, Error> {
         let key = build_key(alias_or_seq_id, begin, end);
-        if let Some(value) = self.cache.as_ref().borrow().get(&key) {
+        if let Some(value) = self.cache.as_ref().lock().expect("could not acquire lock").get(&key) {
             return Ok(value.to_owned());
         }
 
         let value = self.repo.fetch_sequence_part(alias_or_seq_id, begin, end)?;
         self.cache
             .as_ref()
-            .borrow_mut()
+            .lock().expect("could not acquire lock")
             .insert(key.clone(), value.clone());
         self.writer
-            .borrow_mut()
+        .lock().expect("could not acquire lock")
             .write_record(&noodles_fasta::Record::new(
                 noodles_fasta::record::Definition::new(key, None),
                 noodles_fasta::record::Sequence::from(value.as_bytes().to_vec()),
