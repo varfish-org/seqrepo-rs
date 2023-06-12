@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://www.github.com/bihealth/seqrepo-rs/compare/v0.5.1...v0.6.0) (2023-06-12)
+
+
+### Features
+
+* more thread safety ([#62](https://www.github.com/bihealth/seqrepo-rs/issues/62)) ([3a6e72e](https://www.github.com/bihealth/seqrepo-rs/commit/3a6e72ea725cc42ceb6215a7dc615db742d1ce58))
+
 ### [0.5.1](https://www.github.com/bihealth/seqrepo-rs/compare/v0.5.0...v0.5.1) (2023-06-06)
 
 
