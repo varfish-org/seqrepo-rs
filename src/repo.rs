@@ -124,6 +124,12 @@ mod test {
     use anyhow::Error;
 
     #[test]
+    fn test_sync() {
+        fn is_sync<T: Sync>() {}
+        is_sync::<super::SeqRepo>();
+    }
+
+    #[test]
     fn seqrepo_smoke() -> Result<(), Error> {
         let sr = SeqRepo::new("tests/data/seqrepo", "latest")?;
         assert_eq!(

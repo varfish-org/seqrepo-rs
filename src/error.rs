@@ -5,10 +5,6 @@ use thiserror::Error;
 /// Error type for variant mapping.
 #[derive(Error, Debug)]
 pub enum Error {
-    // #[error("validation error")]
-    // ValidationFailed(#[from] crate::validator::Error),
-    // ExpectedGenomeVariant(String),
-    // #[error("expected a TxVariant but received {0}")]
     #[error("error on connecting to database: {0}")]
     AliasDbConnect(String),
     #[error("error on preparing statement: {0}")]
@@ -53,4 +49,6 @@ pub enum Error {
     AliasDbResolve(String),
     #[error("alias {0} resolved to multiple seqids {1}")]
     AliasDbResolutionAmbiguous(String, String),
+    #[error("problem obtaining lock on SQLite connection")]
+    MutexSqlite,
 }
