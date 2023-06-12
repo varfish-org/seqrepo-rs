@@ -1,6 +1,9 @@
 //! Access to the aliases databas.
 
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex},
+};
 
 use crate::error::Error;
 use chrono::NaiveDateTime;
@@ -86,7 +89,7 @@ pub struct AliasDb {
     /// The name of the seqrepo instance.
     sr_instance: String,
     /// Connection to the SQLite database.
-    conn: Connection,
+    conn: Arc<Mutex<Connection>>,
 }
 
 impl AliasDb {
@@ -105,13 +108,17 @@ impl AliasDb {
         })
     }
 
-    fn new_connection(sr_root_dir: &Path, sr_instance: &str) -> Result<Connection, Error> {
+    fn new_connection(
+        sr_root_dir: &Path,
+        sr_instance: &str,
+    ) -> Result<Arc<Mutex<Connection>>, Error> {
         let db_path = sr_root_dir.join(sr_instance).join("aliases.sqlite3");
-        Connection::open_with_flags(
+        let res = Connection::open_with_flags(
             db_path,
             OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
         )
-        .map_err(|e| Error::AliasDbConnect(e.to_string()))
+        .map_err(|e| Error::AliasDbConnect(e.to_string()))?;
+        Ok(Arc::new(Mutex::new(res)))
     }
 
     /// Try to clone the `AliasDb`.
@@ -188,8 +195,9 @@ impl AliasDb {
         sql.push_str(" ORDER BY seq_id, namespace, alias");
         trace!("Executing: {:?} with params {:?}", &sql, &params);
 
-        let mut stmt = self
-            .conn
+        let locked_conn = self.conn.lock().map_err(|_| Error::MutexSqlite)?;
+
+        let mut stmt = locked_conn
             .prepare(&sql)
             .map_err(|e| Error::AliasDbQuery(format!("{}", e)))?;
 
@@ -224,6 +232,12 @@ mod test {
     use pretty_assertions::assert_eq;
 
     use super::{AliasDb, Namespace, Query};
+
+    #[test]
+    fn test_sync() {
+        fn is_sync<T: Sync>() {}
+        is_sync::<super::AliasDb>();
+    }
 
     fn run(aliases: &AliasDb) -> Result<(), Error> {
         let mut values = Vec::new();

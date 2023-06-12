@@ -1,6 +1,9 @@
 //! Code for supporting the FASTA directory access.
 
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex},
+};
 
 use chrono::NaiveDateTime;
 use noodles_core::{Position, Region};
@@ -35,7 +38,7 @@ pub struct FastaDir {
     /// The path to the directory ("$instance/sequences" within seqrepo).
     root_dir: PathBuf,
     /// Connection to the SQLite database "db.sqlite3" inside root_dir.
-    conn: Connection,
+    conn: Arc<Mutex<Connection>>,
     /// Schema version.
     schema_version: u32,
 }
@@ -56,6 +59,7 @@ impl FastaDir {
         .map_err(|e| Error::AliasDbConnect(e.to_string()))?;
 
         let schema_version = Self::fetch_schema_version(&conn)?;
+        let conn = Arc::new(Mutex::new(conn));
         if schema_version != EXPECTED_SCHEMA_VERSION {
             Err(Error::SeqSepoDbSchemaVersion(
                 schema_version,
@@ -91,10 +95,11 @@ impl FastaDir {
 
     /// Load `SeqInfoRecord` from database.
     pub fn fetch_seqinfo(&self, seq_id: &str) -> Result<SeqInfoRecord, Error> {
+        let locked_conn = self.conn.lock().map_err(|_| Error::MutexSqlite)?;
+
         let sql = "select seq_id, len, alpha, added, relpath from seqinfo \
         where seq_id = ? order by added desc";
-        let mut stmt = self
-            .conn
+        let mut stmt = locked_conn
             .prepare(sql)
             .map_err(|e| Error::SeqRepoDbStmt(e.to_string()))?;
 
@@ -169,6 +174,12 @@ mod test {
 
     use anyhow::Error;
     use pretty_assertions::assert_eq;
+
+    #[test]
+    fn test_sync() {
+        fn is_sync<T: Sync>() {}
+        is_sync::<super::FastaDir>();
+    }
 
     #[test]
     fn smoke() -> Result<(), Error> {

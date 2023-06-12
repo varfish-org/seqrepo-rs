@@ -5,10 +5,7 @@ use clap_verbosity_flag::{InfoLevel, Verbosity};
 use textwrap::wrap;
 use tracing::debug;
 
-use seqrepo::{
-    AliasDbRecord, Error, Interface, Namespace as LibNamespace,
-    NamespacedAlias as LibNamespacedAlias, Query, SeqRepo,
-};
+use seqrepo::{self, AliasDbRecord, Error, Interface, Query, SeqRepo};
 
 /// Commonly used command line arguments.
 #[derive(Parser, Debug)]
@@ -63,14 +60,14 @@ pub enum Namespace {
     Ga4gh,
 }
 
-impl From<Namespace> for LibNamespace {
+impl From<Namespace> for seqrepo::Namespace {
     fn from(value: Namespace) -> Self {
         match value {
-            Namespace::Refseq => LibNamespace::new("NCBI"),
-            Namespace::Ensembl => LibNamespace::new("Ensembl"),
-            Namespace::Lrg => LibNamespace::new("Lrg"),
-            Namespace::Sha512t24u => LibNamespace::new(""),
-            Namespace::Ga4gh => LibNamespace::new(""),
+            Namespace::Refseq => seqrepo::Namespace::new("NCBI"),
+            Namespace::Ensembl => seqrepo::Namespace::new("Ensembl"),
+            Namespace::Lrg => seqrepo::Namespace::new("Lrg"),
+            Namespace::Sha512t24u => seqrepo::Namespace::new(""),
+            Namespace::Ga4gh => seqrepo::Namespace::new(""),
         }
     }
 }
@@ -82,9 +79,9 @@ pub struct NamespacedAlias {
     pub alias: String,
 }
 
-impl From<NamespacedAlias> for LibNamespacedAlias {
+impl From<NamespacedAlias> for seqrepo::NamespacedAlias {
     fn from(value: NamespacedAlias) -> Self {
-        LibNamespacedAlias {
+        seqrepo::NamespacedAlias {
             alias: match value.namespace {
                 Namespace::Refseq | Namespace::Ensembl | Namespace::Lrg => value.alias,
                 Namespace::Sha512t24u => format!("GS_{}", value.alias),

@@ -13,7 +13,7 @@ use std::{
 };
 
 use crate::error::Error;
-use crate::repo::{AliasOrSeqId, Interface as SeqRepoInterface, SeqRepo};
+use crate::repo::{self, AliasOrSeqId, SeqRepo};
 
 /// Sequence repository reading from actual implementation and writing to a cache.
 pub struct CacheWritingSeqRepo {
@@ -50,7 +50,7 @@ impl CacheWritingSeqRepo {
     }
 }
 
-impl SeqRepoInterface for CacheWritingSeqRepo {
+impl repo::Interface for CacheWritingSeqRepo {
     fn fetch_sequence_part(
         &self,
         alias_or_seq_id: &AliasOrSeqId,
@@ -122,7 +122,7 @@ impl CacheReadingSeqRepo {
     }
 }
 
-impl SeqRepoInterface for CacheReadingSeqRepo {
+impl repo::Interface for CacheReadingSeqRepo {
     fn fetch_sequence_part(
         &self,
         alias_or_seq_id: &AliasOrSeqId,
@@ -180,6 +180,13 @@ mod test {
     use crate::{AliasOrSeqId, CacheReadingSeqRepo, Interface, SeqRepo};
 
     use super::CacheWritingSeqRepo;
+
+    #[test]
+    fn test_sync() {
+        fn is_sync<T: Sync>() {}
+        is_sync::<super::CacheReadingSeqRepo>();
+        is_sync::<super::CacheWritingSeqRepo>();
+    }
 
     fn test_fetch(sr: &impl Interface) -> Result<(), Error> {
         let alias = "NM_001304430.2";
