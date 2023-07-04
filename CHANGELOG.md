@@ -7,6 +7,13 @@
 
 * release 0.6.1 with noodles updates ([81341fb](https://www.github.com/bihealth/seqrepo-rs/commit/81341fb45f2a3c97c70c1df553e3b57e67beb0a1))
 
+### [0.6.1](https://www.github.com/bihealth/seqrepo-rs/compare/v0.6.0...v0.6.1) (2023-07-04)
+
+
+### Miscellaneous Chores
+
+* release 0.6.1 with noodles updates ([81341fb](https://www.github.com/bihealth/seqrepo-rs/commit/81341fb45f2a3c97c70c1df553e3b57e67beb0a1))
+
 ## [0.6.0](https://www.github.com/bihealth/seqrepo-rs/compare/v0.5.1...v0.6.0) (2023-06-12)
 
 
