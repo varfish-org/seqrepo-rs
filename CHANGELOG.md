@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.7.0](https://www.github.com/bihealth/seqrepo-rs/compare/v0.6.1...v0.7.0) (2023-07-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* add features for disabling sqlite-based implementation (#74)
+
+### Build System
+
+* add features for disabling sqlite-based implementation ([#74](https://www.github.com/bihealth/seqrepo-rs/issues/74)) ([b7fd2f2](https://www.github.com/bihealth/seqrepo-rs/commit/b7fd2f29b7812836e0934d0bc9734268699843c3))
+
 ### [0.6.1](https://www.github.com/bihealth/seqrepo-rs/compare/v0.6.0...v0.6.1) (2023-07-04)
 
 
