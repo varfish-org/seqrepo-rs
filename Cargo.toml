@@ -12,12 +12,23 @@ readme = "README.md"
 name = "seqrepo"
 path = "src/lib.rs"
 
+[features]
+# By default, we enable the directory-based implementation.
+default = ["impl"]
+# Directory-based implementation of the interface as provided by the Python
+# reference implementation.  This will create a runtime dependency on
+# `libsqlite3`.
+impl = ["dep:chrono", "dep:noodles-bgzf", "dep:noodles-core", "dep:noodles-fasta", "dep:rusqlite"]
+# Optional caching implementation that is useful in testing scenarios where
+# one only wants to provide minimal data, e.g., in continuous integration.
+cached = ["impl"]
+
 [dependencies]
-chrono = "0.4"
-noodles-bgzf = "0.22"
-noodles-core = "0.12"
-noodles-fasta = "0.25"
-rusqlite = "0.29"
+chrono = { version = "0.4", optional = true }
+noodles-bgzf = { version = "0.22", optional = true }
+noodles-core = { version = "0.12", optional = true }
+noodles-fasta = { version = "0.25", optional = true }
+rusqlite = { version = "0.29", optional = true }
 thiserror = "1.0"
 tracing = "0.1"
 

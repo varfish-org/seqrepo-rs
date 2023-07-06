@@ -12,8 +12,11 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::error::Error;
-use crate::repo::{self, AliasOrSeqId, SeqRepo};
+use crate::repo::SeqRepo;
+use crate::{
+    error::Error,
+    interface::{AliasOrSeqId, Interface},
+};
 
 /// Sequence repository reading from actual implementation and writing to a cache.
 pub struct CacheWritingSeqRepo {
@@ -50,7 +53,7 @@ impl CacheWritingSeqRepo {
     }
 }
 
-impl repo::Interface for CacheWritingSeqRepo {
+impl Interface for CacheWritingSeqRepo {
     fn fetch_sequence_part(
         &self,
         alias_or_seq_id: &AliasOrSeqId,
@@ -122,7 +125,7 @@ impl CacheReadingSeqRepo {
     }
 }
 
-impl repo::Interface for CacheReadingSeqRepo {
+impl Interface for CacheReadingSeqRepo {
     fn fetch_sequence_part(
         &self,
         alias_or_seq_id: &AliasOrSeqId,
