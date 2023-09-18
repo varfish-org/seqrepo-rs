@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://www.github.com/bihealth/seqrepo-rs/compare/v0.7.0...v0.8.0) (2023-09-18)
+
+
+### Features
+
+* various dependency updates, bump version to 0.8.0 ([#80](https://www.github.com/bihealth/seqrepo-rs/issues/80)) ([ae4f964](https://www.github.com/bihealth/seqrepo-rs/commit/ae4f9642cd03fcd84c865fa12178bc05096db810))
+
 ## [0.7.0](https://www.github.com/bihealth/seqrepo-rs/compare/v0.6.1...v0.7.0) (2023-07-06)
 
 
