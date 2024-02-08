@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/varfish-org/seqrepo-rs/compare/v0.9.0...v0.10.0) (2024-02-08)
+
+
+### Miscellaneous Chores
+
+* release as v0.10.0 ([b7fe0f0](https://github.com/varfish-org/seqrepo-rs/commit/b7fe0f0501ca3a2e6b4489dde0130cd896f16849))
+
 ## [0.9.0](https://www.github.com/varfish-org/seqrepo-rs/compare/v0.8.0...v0.9.0) (2023-11-07)
 
 
