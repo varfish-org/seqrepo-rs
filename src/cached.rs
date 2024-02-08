@@ -115,7 +115,9 @@ impl CacheReadingSeqRepo {
         for record in reader.records() {
             let record = record.map_err(|e| Error::SeqSepoCacheRead(e.to_string()))?;
             result.insert(
-                record.name().to_string(),
+                std::str::from_utf8(record.name().as_ref())
+                    .map_err(|e| Error::SeqSepoCacheOpenRead(e.to_string()))?
+                    .to_string(),
                 std::str::from_utf8(record.sequence().as_ref())
                     .map_err(|e| Error::SeqSepoCacheOpenRead(e.to_string()))?
                     .to_string(),
