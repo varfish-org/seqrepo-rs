@@ -62,7 +62,7 @@ jobs:
       - name: Install cargo-tarpaulin
         run: cargo install cargo-tarpaulin --version '0.27.3'
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2.7.3
         with:
           key: cargo-tarpaulin-0.27.3
 
