@@ -169,7 +169,7 @@ impl AliasDb {
         }
         // Add seqid to query if provided.
         if let Some(seqid) = query.seqid.as_deref() {
-            clauses.push(format!("alias {} ?", eq_or_like(seqid)));
+            clauses.push(format!("seq_id {} ?", eq_or_like(seqid)));
             params.push(Value::Text(seqid.to_string()));
         }
         // Possibly limit to the current ones only.
