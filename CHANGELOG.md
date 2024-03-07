@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.1](https://github.com/varfish-org/seqrepo-rs/compare/v0.10.0...v0.10.1) (2024-03-07)
+
+
+### Bug Fixes
+
+* use  column for seqid alias query ([#100](https://github.com/varfish-org/seqrepo-rs/issues/100)) ([19eb0d6](https://github.com/varfish-org/seqrepo-rs/commit/19eb0d66ee745b3386c7b4aee978b80107d20ece))
+
 ## [0.10.0](https://github.com/varfish-org/seqrepo-rs/compare/v0.9.0...v0.10.0) (2024-02-08)
 
 
