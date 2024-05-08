@@ -3,7 +3,7 @@
 use thiserror::Error;
 
 /// Error type for variant mapping.
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum Error {
     #[error("error on connecting to database: {0}")]
     AliasDbConnect(String),
