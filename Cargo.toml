@@ -18,19 +18,21 @@ default = ["impl"]
 # Directory-based implementation of the interface as provided by the Python
 # reference implementation.  This will create a runtime dependency on
 # `libsqlite3`.
-impl = ["dep:chrono", "dep:noodles-bgzf", "dep:noodles-core", "dep:noodles-fasta", "dep:rusqlite"]
+impl = ["dep:chrono", "dep:noodles", "dep:rusqlite"]
 # Optional caching implementation that is useful in testing scenarios where
 # one only wants to provide minimal data, e.g., in continuous integration.
 cached = ["impl"]
 
 [dependencies]
 chrono = { version = "0.4", optional = true }
-noodles-bgzf = { version = "0.26", optional = true }
-noodles-core = { version = "0.14", optional = true }
-noodles-fasta = { version = "0.33", optional = true }
 rusqlite = { version = "0.31", optional = true }
 thiserror = "1.0"
 tracing = "0.1"
+
+[dependencies.noodles]
+version = "0.76.0"
+features = ["bgzf", "core", "fasta"]
+optional = true
 
 [dev-dependencies]
 anyhow = "1.0"
