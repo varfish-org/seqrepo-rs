@@ -30,7 +30,7 @@ thiserror = "1.0"
 tracing = "0.1"
 
 [dependencies.noodles]
-version = "0.76.0"
+version = "0.77.0"
 features = ["bgzf", "core", "fasta"]
 optional = true
 
