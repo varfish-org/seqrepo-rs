@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.3](https://github.com/varfish-org/seqrepo-rs/compare/v0.10.2...v0.10.3) (2024-07-25)
+
+
+### Bug Fixes
+
+* using unbuffered I/O for CacheWritingSeqRepo ([#119](https://github.com/varfish-org/seqrepo-rs/issues/119)) ([5e1731b](https://github.com/varfish-org/seqrepo-rs/commit/5e1731b46a13c67bed52ff4d28cf4af78eadebb2))
+
 ## [0.10.2](https://github.com/varfish-org/seqrepo-rs/compare/v0.10.1...v0.10.2) (2024-06-10)
 
 
