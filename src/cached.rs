@@ -7,7 +7,7 @@
 use std::{
     collections::HashMap,
     fs::{File, OpenOptions},
-    io::{BufReader, BufWriter},
+    io::BufReader,
     path::Path,
     sync::{Arc, Mutex},
 };
@@ -21,7 +21,7 @@ use crate::{
 /// Sequence repository reading from actual implementation and writing to a cache.
 pub struct CacheWritingSeqRepo {
     /// Path to the cache file to write to.
-    writer: Arc<Mutex<noodles::fasta::Writer<BufWriter<File>>>>,
+    writer: Arc<Mutex<noodles::fasta::Writer<File>>>,
     /// The actual implementation used for reading.
     repo: SeqRepo,
     /// The internal cache built when writing.
@@ -47,9 +47,7 @@ impl CacheWritingSeqRepo {
             .map_err(|e| Error::SeqSepoCacheOpenWrite(e.to_string()))?;
         Ok(Self {
             repo,
-            writer: Arc::new(Mutex::new(noodles::fasta::Writer::new(BufWriter::new(
-                file,
-            )))),
+            writer: Arc::new(Mutex::new(noodles::fasta::Writer::new(file))),
             cache,
         })
     }
@@ -79,7 +77,8 @@ impl Interface for CacheWritingSeqRepo {
             .lock()
             .expect("could not acquire lock")
             .insert(key.clone(), value.clone());
-        self.writer
+        let writer = self
+            .writer
             .lock()
             .expect("could not acquire lock")
             .write_record(&noodles::fasta::Record::new(
