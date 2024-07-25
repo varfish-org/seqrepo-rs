@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"]
 description = "Port of (read-only) functionality of biocommons/seqrepo to Rust"
 license = "Apache-2.0"
-homepage = "https://github.com/varfish-org/seqrepo-rs"
+repository = "https://github.com/varfish-org/seqrepo-rs"
 readme = "README.md"
 
 [lib]
