@@ -77,8 +77,7 @@ impl Interface for CacheWritingSeqRepo {
             .lock()
             .expect("could not acquire lock")
             .insert(key.clone(), value.clone());
-        let writer = self
-            .writer
+        self.writer
             .lock()
             .expect("could not acquire lock")
             .write_record(&noodles::fasta::Record::new(
