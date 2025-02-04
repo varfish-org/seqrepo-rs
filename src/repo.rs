@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use crate::error::Error;
 use crate::interface::Interface;
-use crate::{AliasDb, AliasOrSeqId, FastaDir, Namespace, Query};
+use crate::{AliasDb, AliasOrSeqId, FastaDir, Namespace, Query, Sequence};
 
 /// Provide (read-only) access to a `seqrepo` sequence repository.
 #[derive(Debug)]
@@ -65,7 +65,7 @@ impl Interface for SeqRepo {
         alias_or_seq_id: &AliasOrSeqId,
         begin: Option<usize>,
         end: Option<usize>,
-    ) -> Result<String, Error> {
+    ) -> Result<Sequence, Error> {
         let seq_ids = match alias_or_seq_id {
             AliasOrSeqId::Alias { value, namespace } => {
                 let query = Query {
@@ -130,7 +130,7 @@ mod test {
                 value: alias.to_string(),
                 namespace: None
             })?,
-            "ACTGCTGAGCTGGGAGATGTCGGCGGCGTGTTGGGAGGAACCGTGGGGTCTTCCCGGCGGCTTT\
+            b"ACTGCTGAGCTGGGAGATGTCGGCGGCGTGTTGGGAGGAACCGTGGGGTCTTCCCGGCGGCTTT\
             GCGAAGCGGGTCCTGGTGACCGGCGGTGCTGGTTTCATGTAGGTAATGGCGCCGCTAGCCAAGCA\
             GTGGCTCCCCAGAAACCCCTACCTTTTCCCGCAGCTCTGCTTGCCCTAGTGCATCACATATGATT\
             GTCTCTTTAGTGGAAGATTATCCAAACTATATGATCATAAATCTAGACAAGCTGGATTACTGTGC\
@@ -178,7 +178,7 @@ mod test {
                 Some(0),
                 Some(10)
             )?,
-            "ACTGCTGAGC"
+            b"ACTGCTGAGC"
         );
         assert_eq!(
             sr.fetch_sequence_part(
@@ -189,7 +189,7 @@ mod test {
                 Some(100),
                 Some(110)
             )?,
-            "ATGTAGGTAA"
+            b"ATGTAGGTAA"
         );
 
         Ok(())

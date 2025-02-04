@@ -10,6 +10,7 @@ use noodles::core::{Position, Region};
 use rusqlite::{Connection, OpenFlags};
 
 use crate::error::Error;
+use crate::Sequence;
 
 static EXPECTED_SCHEMA_VERSION: u32 = 1;
 
@@ -120,7 +121,7 @@ impl FastaDir {
     }
 
     /// Load complete sequence from FASTA directory.
-    pub fn fetch_sequence(&self, seq_id: &str) -> Result<String, Error> {
+    pub fn fetch_sequence(&self, seq_id: &str) -> Result<Sequence, Error> {
         self.fetch_sequence_part(seq_id, None, None)
     }
 
@@ -130,7 +131,7 @@ impl FastaDir {
         seq_id: &str,
         begin: Option<usize>,
         end: Option<usize>,
-    ) -> Result<String, Error> {
+    ) -> Result<Sequence, Error> {
         let seqinfo = self.fetch_seqinfo(seq_id)?;
 
         let path_bgzip = self.root_dir.join(seqinfo.relpath);
@@ -162,9 +163,7 @@ impl FastaDir {
             .query(&region)
             .map_err(|e| Error::SeqRepoFaiQuery(e.to_string()))?;
 
-        Ok(std::str::from_utf8(record.sequence().as_ref())
-            .unwrap()
-            .to_string())
+        Ok(record.sequence().as_ref().to_vec())
     }
 }
 
@@ -211,7 +210,7 @@ mod test {
 
         assert_eq!(
             fd.fetch_sequence(seq_id)?,
-            "ACTGCTGAGCTGGGAGATGTCGGCGGCGTGTTGGGAGGAACCGTGGGGTCTTCCCGGCGGCTTT\
+            b"ACTGCTGAGCTGGGAGATGTCGGCGGCGTGTTGGGAGGAACCGTGGGGTCTTCCCGGCGGCTTT\
             GCGAAGCGGGTCCTGGTGACCGGCGGTGCTGGTTTCATGTAGGTAATGGCGCCGCTAGCCAAGCA\
             GTGGCTCCCCAGAAACCCCTACCTTTTCCCGCAGCTCTGCTTGCCCTAGTGCATCACATATGATT\
             GTCTCTTTAGTGGAAGATTATCCAAACTATATGATCATAAATCTAGACAAGCTGGATTACTGTGC\
@@ -252,11 +251,11 @@ mod test {
 
         assert_eq!(
             fd.fetch_sequence_part(seq_id, Some(0), Some(10))?,
-            "ACTGCTGAGC"
+            b"ACTGCTGAGC"
         );
         assert_eq!(
             fd.fetch_sequence_part(seq_id, Some(100), Some(110))?,
-            "ATGTAGGTAA"
+            b"ATGTAGGTAA"
         );
 
         Ok(())

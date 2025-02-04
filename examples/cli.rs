@@ -126,6 +126,7 @@ fn main_export(common_args: &CommonArgs, args: &ExportArgs) -> Result<(), Error>
             let seq = seq_repo
                 .fetch_sequence(&seqrepo::AliasOrSeqId::SeqId(group[0].seqid.clone()))
                 .unwrap();
+            let seq = String::from_utf8(seq).unwrap();
             group.sort_by(|a, b| {
                 let (a, b) = (&a.namespace, &b.namespace);
                 a.value.partial_cmp(&b.value).unwrap()

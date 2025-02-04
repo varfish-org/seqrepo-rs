@@ -22,3 +22,5 @@ pub use crate::fasta::*;
 pub use crate::interface::*;
 #[cfg(feature = "impl")]
 pub use crate::repo::*;
+
+pub type Sequence = Vec<u8>;

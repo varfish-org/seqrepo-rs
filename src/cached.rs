@@ -16,6 +16,7 @@ use crate::repo::SeqRepo;
 use crate::{
     error::Error,
     interface::{AliasOrSeqId, Interface},
+    Sequence,
 };
 
 /// Sequence repository reading from actual implementation and writing to a cache.
@@ -25,7 +26,7 @@ pub struct CacheWritingSeqRepo {
     /// The actual implementation used for reading.
     repo: SeqRepo,
     /// The internal cache built when writing.
-    cache: Arc<Mutex<HashMap<String, String>>>,
+    cache: Arc<Mutex<HashMap<String, Sequence>>>,
 }
 
 impl CacheWritingSeqRepo {
@@ -59,7 +60,7 @@ impl Interface for CacheWritingSeqRepo {
         alias_or_seq_id: &AliasOrSeqId,
         begin: Option<usize>,
         end: Option<usize>,
-    ) -> Result<String, Error> {
+    ) -> Result<Sequence, Error> {
         let key = build_key(alias_or_seq_id, begin, end);
         if let Some(value) = self
             .cache
@@ -82,7 +83,7 @@ impl Interface for CacheWritingSeqRepo {
             .expect("could not acquire lock")
             .write_record(&noodles::fasta::Record::new(
                 noodles::fasta::record::Definition::new(key, None),
-                noodles::fasta::record::Sequence::from(value.as_bytes().to_vec()),
+                noodles::fasta::record::Sequence::from(value.clone()),
             ))
             .map_err(|e| Error::SeqSepoCacheWrite(e.to_string()))?;
         Ok(value)
@@ -92,7 +93,7 @@ impl Interface for CacheWritingSeqRepo {
 /// Sequence repository reading from a cache.
 pub struct CacheReadingSeqRepo {
     /// Map of query key to sequence.
-    cache: HashMap<String, String>,
+    cache: HashMap<String, Sequence>,
 }
 
 impl CacheReadingSeqRepo {
@@ -105,7 +106,7 @@ impl CacheReadingSeqRepo {
         })
     }
 
-    fn read_cache(path: &Path) -> Result<HashMap<String, String>, Error> {
+    fn read_cache(path: &Path) -> Result<HashMap<String, Sequence>, Error> {
         let mut reader = File::open(path)
             .map(BufReader::new)
             .map(noodles::fasta::Reader::new)
@@ -118,9 +119,7 @@ impl CacheReadingSeqRepo {
                 std::str::from_utf8(record.name().as_ref())
                     .map_err(|e| Error::SeqSepoCacheOpenRead(e.to_string()))?
                     .to_string(),
-                std::str::from_utf8(record.sequence().as_ref())
-                    .map_err(|e| Error::SeqSepoCacheOpenRead(e.to_string()))?
-                    .to_string(),
+                record.sequence().as_ref().to_vec(),
             );
         }
         Ok(result)
@@ -133,7 +132,7 @@ impl Interface for CacheReadingSeqRepo {
         alias_or_seq_id: &AliasOrSeqId,
         begin: Option<usize>,
         end: Option<usize>,
-    ) -> Result<String, Error> {
+    ) -> Result<Sequence, Error> {
         let key = build_key(alias_or_seq_id, begin, end);
         if let Some(seq) = self.cache.get(&key) {
             Ok(seq.clone())
@@ -202,7 +201,7 @@ mod test {
 
         assert_eq!(
             sr.fetch_sequence(&aos)?,
-            "ACTGCTGAGCTGGGAGATGTCGGCGGCGTGTTGGGAGGAACCGTGGGGTCTTCCCGGCGGCTTT\
+            b"ACTGCTGAGCTGGGAGATGTCGGCGGCGTGTTGGGAGGAACCGTGGGGTCTTCCCGGCGGCTTT\
             GCGAAGCGGGTCCTGGTGACCGGCGGTGCTGGTTTCATGTAGGTAATGGCGCCGCTAGCCAAGCA\
             GTGGCTCCCCAGAAACCCCTACCTTTTCCCGCAGCTCTGCTTGCCCTAGTGCATCACATATGATT\
             GTCTCTTTAGTGGAAGATTATCCAAACTATATGATCATAAATCTAGACAAGCTGGATTACTGTGC\
@@ -232,9 +231,9 @@ mod test {
             TGTTTAAAATGATTGTATTTATAAAATTGTCAATATCTTAATGTATTTAATGTAGAATATTGCTT\
             TTTAAAATAATGTTTTTATTTTGCTGTAGAAAAATAAAAAAAAATTTGATTATA"
         );
-        assert_eq!(sr.fetch_sequence_part(&aos, None, Some(4))?, "ACTG");
-        assert_eq!(sr.fetch_sequence_part(&aos, Some(1869), None)?, "TATA");
-        assert_eq!(sr.fetch_sequence_part(&aos, Some(0), Some(4))?, "ACTG");
+        assert_eq!(sr.fetch_sequence_part(&aos, None, Some(4))?, b"ACTG");
+        assert_eq!(sr.fetch_sequence_part(&aos, Some(1869), None)?, b"TATA");
+        assert_eq!(sr.fetch_sequence_part(&aos, Some(0), Some(4))?, b"ACTG");
 
         Ok(())
     }
